@@ -1,10 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC
+    "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+   Info.plist for "LIVE Match - Matchmaking" (iOS).
+   Includes AdMob keys, SKAdNetwork identifiers for iOS 14+ ad support,
+   usage descriptions, background modes, etc.
+   Complies with Apple guidelines and AdMob integration best practices.
+-->
 <plist version="1.0">
 <dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
+    <!-- App Basic Info -->
+    <key>CFBundleName</key>
+    <string>LIVE Match - Matchmaking</string>
+    <key>CFBundleDisplayName</key>
+    <string>LIVE Match - Matchmaking</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.example.LIVEMatch</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    
+    <!-- Firebase & Remote Notifications -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>remote-notification</string>
+    </array>
+    
+    <!-- Usage Descriptions -->
+    <key>NSCameraUsageDescription</key>
+    <string>Camera access is needed to capture your profile picture and for live streaming.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We need photo library access so you can select a profile picture or other media.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Microphone access is required for live streaming audio or voice chats.</string>
+    <!-- If the app uses location:
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>We use your location to enhance your matchmaking experience.</string>
+    -->
+    
+    <!-- AdMob Application Identifier -->
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-6815311336585204~7995771052</string>
+    
+    <!-- SKAdNetworkItems for iOS 14+ ad attribution -->
+    <key>SKAdNetworkItems</key>
+    <array>
+        <!-- Common Google/AdMob network IDs -->
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>cstr6su5fj.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>4fzdc2evr5.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>4pfyvq9l8r.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>2fnua5tdw4.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>ydx93a7ass.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>778lra9vel.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>cp8zw746q7.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>v9wttpbfk9.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>n38lu8286q.skadnetwork</string>
+        </dict>
+    </array>
+    
+    <!-- iOS 14+ Tracking Transparency (if you want personalized ads) -->
+    <key>NSUserTrackingUsageDescription</key>
+    <string>We use your device identifier to provide personalized ads and improve your experience.</string>
+    
+    <!-- If In-App Messaging or manual push integration:
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <false/>
+    -->
 </dict>
 </plist>
