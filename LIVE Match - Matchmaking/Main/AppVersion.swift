@@ -23,12 +23,12 @@ import SwiftUI
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct AppVersion {
     public static let currentVersion: String = "1.0"
-    public static let currentBuild: String = "1"
+    public static let currentBuild: String = "2"
     
     // If you want to require the user to be on at least version 1.0 (build 1), set requiredVersion below:
     // For a real-world scenario, you might fetch this from a remote config or your backend.
     private static let requiredVersion: String = "1.0"
-    private static let requiredBuild: String = "1"
+    private static let requiredBuild: String = "2"
     
     // MARK: checkVersion
     // Ensures the user is on at least the requiredVersion/Build
