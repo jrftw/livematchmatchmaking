@@ -19,7 +19,12 @@ public struct ChangelogEntry: Identifiable {
     public let releaseDate: String
     public let changes: [String]
     
-    public init(version: String, build: String, releaseDate: String, changes: [String]) {
+    public init(
+        version: String,
+        build: String,
+        releaseDate: String,
+        changes: [String]
+    ) {
         self.version = version
         self.build = build
         self.releaseDate = releaseDate
@@ -29,7 +34,6 @@ public struct ChangelogEntry: Identifiable {
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct Changelog {
-    // Example data. Expand as needed or fetch from a server.
     public static let entries: [ChangelogEntry] = [
         ChangelogEntry(
             version: "1.0",
@@ -41,7 +45,16 @@ public struct Changelog {
                 "Added user profiles with advanced editing.",
                 "Implemented Feed with multiple filter toggles."
             ]
+        ),
+        ChangelogEntry(
+            version: "1.0",
+            build: "2",
+            releaseDate: "2025-01-28",
+            changes: [
+                "Added Template CSV download.",
+                "Improved bracket creation with predefined time zones."
+            ]
         )
-        // You can add more versions here as you release updates...
+        // Add more versions here as you release updates...
     ]
 }
