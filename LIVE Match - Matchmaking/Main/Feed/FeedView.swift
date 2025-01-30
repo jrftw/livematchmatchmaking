@@ -1,12 +1,24 @@
+//
+//  FeedView.swift
+//  LIVE Match - Matchmaking
+//
+//  Created by Kevin Doyle Jr. on 1/30/25.
+//
+
+
 // MARK: FeedView.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Displays toggles to filter feed: Everyone, Friends, Following, Creator Network, Gaming, Agency
-// Then shows posts from users, tournaments, brackets, etc.
+// A container view displaying the feed with improved styling.
 
 import SwiftUI
+import Firebase
+import FirebaseAuth
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-struct FeedView: View {
+public struct FeedView: View {
+    @StateObject private var vm = FeedViewModel()
+    
+    @State private var filterExpanded = false
     @State private var showEveryone = true
     @State private var showFriends = false
     @State private var showFollowing = false
@@ -14,14 +26,14 @@ struct FeedView: View {
     @State private var showGaming = false
     @State private var showAgency = false
     
-    var body: some View {
-        VStack {
-            Text("Feed")
-                .font(.title)
-                .padding(.top, 20)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
+    @State private var showingComposer = false
+    
+    public init() {}
+    
+    public var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                DisclosureGroup("Feed Filters", isExpanded: $filterExpanded) {
                     Toggle("Everyone", isOn: $showEveryone)
                     Toggle("Friends", isOn: $showFriends)
                     Toggle("Following", isOn: $showFollowing)
@@ -30,36 +42,60 @@ struct FeedView: View {
                     Toggle("Agency", isOn: $showAgency)
                 }
                 .padding()
-            }
-            
-            Divider()
-            
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Example placeholders based on toggles
-                    if showEveryone {
-                        Text("Showing Everyone's Posts/Events").font(.subheadline)
+                
+                Divider()
+                
+                if vm.posts.isEmpty {
+                    Text("No posts to display.")
+                        .foregroundColor(.gray)
+                        .padding(.top, 50)
+                } else {
+                    List {
+                        ForEach(filteredPosts) { post in
+                            PostRowView(post: post)
+                        }
                     }
-                    if showFriends {
-                        Text("Friends Feed").font(.subheadline)
-                    }
-                    if showFollowing {
-                        Text("Following Feed").font(.subheadline)
-                    }
-                    if showCreatorNetwork {
-                        Text("Creator Network Posts").font(.subheadline)
-                    }
-                    if showGaming {
-                        Text("Gaming Feed: Tournaments, Matches, etc.").font(.subheadline)
-                    }
-                    if showAgency {
-                        Text("Agency Updates, Talent, Opportunities").font(.subheadline)
-                    }
-                    
-                    // Real feed content would go here
+                    .listStyle(.plain)
                 }
-                .padding(.vertical, 20)
+                
+                if Auth.auth().currentUser != nil {
+                    Button {
+                        showingComposer = true
+                    } label: {
+                        Text("Create New Post")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .cornerRadius(8)
+                            .padding(.horizontal)
+                            .padding(.vertical, 10)
+                    }
+                }
             }
+            .navigationTitle("Feed")
+            .sheet(isPresented: $showingComposer) {
+                PostComposerView { text, imageURL, videoURL in
+                    vm.createPost(text: text, imageURL: imageURL, videoURL: videoURL)
+                }
+            }
+        }
+        .onAppear {
+            vm.fetchPosts()
+        }
+    }
+    
+    private var filteredPosts: [Post] {
+        vm.posts.filter { post in
+            var showThisPost = false
+            if showEveryone { showThisPost = true }
+            if showFriends { showThisPost = showThisPost || false }
+            if showFollowing { showThisPost = showThisPost || false }
+            if showCreatorNetwork { showThisPost = showThisPost || false }
+            if showGaming { showThisPost = showThisPost || false }
+            if showAgency { showThisPost = showThisPost || false }
+            return showThisPost
         }
     }
 }

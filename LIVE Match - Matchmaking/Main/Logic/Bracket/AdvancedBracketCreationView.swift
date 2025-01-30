@@ -2,13 +2,10 @@
 //  AdvancedBracketCreationView.swift
 //  LIVE Match - Matchmaking
 //
-//  Created by Kevin Doyle Jr. on 1/28/25.
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  A comprehensive bracket creation flow that supports editing bracket details,
+//  adding real data for bracket participants, inviting creators, and selecting a predefined timezone.
 //
-
-// MARK: File: AdvancedBracketCreationView.swift
-// MARK: iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// A comprehensive bracket creation flow that supports editing all bracket details,
-// adding real data for bracket participants, inviting creators, and selecting a predefined timezone.
 
 import SwiftUI
 import FirebaseFirestore
@@ -24,9 +21,7 @@ public struct AdvancedBracketCreationView: View {
     @State private var startTime = Date()
     @State private var stopTime = Date().addingTimeInterval(3600)
     
-    // Instead of typing a raw time zone, we select from a predefined list:
     @State private var bracketTimezone = "Pacific Time (PST/PDT) – UTC-8 or UTC-7 (DST)"
-    
     private let bracketStyles = ["One and Done", "Best 2/3", "Best 3/5"]
     @State private var selectedBracketStyle = "One and Done"
     
@@ -52,11 +47,9 @@ public struct AdvancedBracketCreationView: View {
                     DatePicker("Scheduled Start", selection: $startTime)
                     DatePicker("Scheduled Stop", selection: $stopTime)
                     
-                    NavigationLink("Timezone: \(bracketTimezone)", destination: {
-                        TimeZonePickerView(
-                            currentSelection: $bracketTimezone
-                        )
-                    })
+                    NavigationLink("Timezone: \(bracketTimezone)") {
+                        TimeZonePickerView(currentSelection: $bracketTimezone)
+                    }
                     
                     Picker("Bracket Style", selection: $selectedBracketStyle) {
                         ForEach(bracketStyles, id: \.self) { style in
@@ -82,7 +75,9 @@ public struct AdvancedBracketCreationView: View {
                     } else {
                         ForEach(entries.indices, id: \.self) { idx in
                             NavigationLink(destination: EditBracketEntryView(entry: $entries[idx])) {
-                                Text(entries[idx].username.isEmpty ? "Unnamed Participant" : entries[idx].username)
+                                Text(entries[idx].username.isEmpty
+                                     ? "Unnamed Participant"
+                                     : entries[idx].username)
                             }
                         }
                     }
@@ -95,7 +90,9 @@ public struct AdvancedBracketCreationView: View {
             }
             .navigationTitle(title)
         }
+        #if os(iOS) || os(visionOS)
         .navigationViewStyle(StackNavigationViewStyle())
+        #endif
         .onAppear { fetchBracketCreatorName() }
         .sheet(isPresented: $showCSVImporter) {
             CSVImporterView { importedEntries in
@@ -139,7 +136,7 @@ public struct AdvancedBracketCreationView: View {
             discordUsername: "",
             daysOfWeekAvailable: [],
             timesAvailable: "",
-            timezone: bracketTimezone,  // default to bracket’s selection
+            timezone: bracketTimezone,
             networkOrAgency: nil,
             maxBracketMatches: 5,
             maxMatchesPerDay: 2,

@@ -1,6 +1,10 @@
-// MARK: TabContainerView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Main tab bar with 4 icons at the bottom: Main Menu, Feed, Messages, Profile.
+//
+//  TabContainerView.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  Alternative approach using SwiftUI's TabView. You can safely remove this file if you prefer BottomBarView.
+//
 
 import SwiftUI
 import FirebaseAuth
@@ -14,22 +18,21 @@ public struct TabContainerView: View {
     
     public var body: some View {
         TabView(selection: $selectedTab) {
-            // Always visible
             MainMenuView()
                 .tabItem {
                     Label("Main Menu", systemImage: "house.fill")
                 }
                 .tag(0)
             
-            // Shown only if user is logged in
-            if authManager.user != nil {
+            if authManager.user != nil || authManager.isGuest {
                 FeedView()
                     .tabItem {
                         Label("Feed", systemImage: "bubble.left.and.bubble.right.fill")
                     }
                     .tag(1)
                 
-                MessagesView()
+                // Direct or advanced messaging approach
+                MessagesHomeView()
                     .tabItem {
                         Label("Messages", systemImage: "message.fill")
                     }

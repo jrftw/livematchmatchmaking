@@ -1,16 +1,17 @@
-//
-//  MainMenuView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Shows a grid of menu items for the user, minus sign-out button.
-//
+// MARK: MainMenuView.swift
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// Shows a grid of menu items for the user, minus sign-out button.
+// Integrates a reorder option, with "Achievements" for all non-guest users, and "Settings" always bottom-right.
+
 import SwiftUI
 import FirebaseAuth
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 struct MainMenuView: View {
     @ObservedObject private var authManager = AuthManager.shared
+    @StateObject private var reorderManager = ReorderManager()
+    
+    @State private var isEditingLayout = false
     
     struct MenuItem: Identifiable {
         let id = UUID()
@@ -32,11 +33,20 @@ struct MainMenuView: View {
                     .font(.largeTitle)
                     .padding(.top, 30)
                 
+                // Reorder toggle button
+                Button(isEditingLayout ? "Done" : "Edit Layout") {
+                    isEditingLayout.toggle()
+                }
+                .font(.headline)
+                .padding(.vertical, 8)
+                
                 Spacer(minLength: 10)
                 
                 ScrollView {
+                    // Adaptive grid
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 20)]) {
-                        ForEach(dynamicItems()) { item in
+                        // Return items from reorderManager
+                        ForEach(reorderedItems(), id: \.id) { item in
                             NavigationLink(destination: item.destination) {
                                 VStack(spacing: 12) {
                                     Image(systemName: item.icon)
@@ -57,6 +67,16 @@ struct MainMenuView: View {
                                         .fill(item.color.opacity(0.2))
                                 )
                             }
+                            .overlay(
+                                // Show drag handle if editing layout AND it's not Settings
+                                DraggableHandleOverlay(
+                                    isEditing: isEditingLayout,
+                                    title: item.title,
+                                    reorderManager: reorderManager
+                                )
+                                .offset(x: 40, y: -40)
+                                .opacity((isEditingLayout && item.title != "Settings") ? 1 : 0)
+                            )
                         }
                     }
                     .padding(.horizontal)
@@ -67,11 +87,18 @@ struct MainMenuView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            // Load the items into reorderManager
+            reorderManager.loadItems(with: dynamicItems())
+        }
     }
     
+    // MARK: Generate the main menu items.
+    // "Achievements" is added for non-guest accounts. "Settings" is always last.
     func dynamicItems() -> [MenuItem] {
         let accountTypes = currentAccountTypes()
         
+        // If user is not logged in and not a guest
         if authManager.user == nil && !authManager.isGuest {
             return [
                 MenuItem(
@@ -89,6 +116,7 @@ struct MainMenuView: View {
             ]
         }
         
+        // If user is a guest
         if accountTypes.contains(.guest) && authManager.isGuest {
             return [
                 MenuItem(
@@ -106,23 +134,26 @@ struct MainMenuView: View {
             ]
         }
         
+        // For viewer/creator/gamer
         if accountTypes.contains(.viewer) || accountTypes.contains(.creator) || accountTypes.contains(.gamer) {
             var items: [MenuItem] = []
             if accountTypes.contains(.creator) || accountTypes.contains(.gamer) {
-                items.append(contentsOf: [
+                items.append(
                     MenuItem(
                         title: "LIVE Matchmaking",
                         icon: "video.fill",
                         color: .purple,
                         destination: AnyView(StreamingView())
-                    ),
+                    )
+                )
+                items.append(
                     MenuItem(
                         title: "Game Matchmaking",
                         icon: "gamecontroller.fill",
                         color: .blue,
                         destination: AnyView(MatchmakingView())
                     )
-                ])
+                )
             }
             if accountTypes.contains(.viewer) {
                 items.append(
@@ -134,23 +165,39 @@ struct MainMenuView: View {
                     )
                 )
             }
-            items.append(contentsOf: [
+            
+            // Add Achievements
+            items.append(
+                MenuItem(
+                    title: "Achievements",
+                    icon: "star.fill",
+                    color: .yellow,
+                    destination: AnyView(AchievementsView())
+                )
+            )
+            
+            items.append(
                 MenuItem(
                     title: "Leaderboards",
                     icon: "list.number",
                     color: .orange,
                     destination: AnyView(LeaderboardsView())
-                ),
+                )
+            )
+            
+            // Always add "Settings" last
+            items.append(
                 MenuItem(
                     title: "Settings",
                     icon: "gearshape.fill",
                     color: .gray,
                     destination: AnyView(AppSettingsView())
                 )
-            ])
+            )
             return items
         }
         
+        // For team/agency/creatornetwork/scouter
         if accountTypes.contains(.team) || accountTypes.contains(.agency) ||
            accountTypes.contains(.creatornetwork) || accountTypes.contains(.scouter) {
             return [
@@ -171,6 +218,13 @@ struct MainMenuView: View {
                     icon: "rosette",
                     color: .red,
                     destination: AnyView(TournamentListView())
+                ),
+                // Achievements
+                MenuItem(
+                    title: "Achievements",
+                    icon: "star.fill",
+                    color: .yellow,
+                    destination: AnyView(AchievementsView())
                 ),
                 MenuItem(
                     title: "Leaderboards",
@@ -193,6 +247,7 @@ struct MainMenuView: View {
             ]
         }
         
+        // Fallback for non-guest user not matched above
         return [
             MenuItem(
                 title: "LIVE Matchmaking",
@@ -211,6 +266,13 @@ struct MainMenuView: View {
                 icon: "rosette",
                 color: .red,
                 destination: AnyView(TournamentListView())
+            ),
+            // Achievements
+            MenuItem(
+                title: "Achievements",
+                icon: "star.fill",
+                color: .yellow,
+                destination: AnyView(AchievementsView())
             ),
             MenuItem(
                 title: "Leaderboards",
@@ -231,6 +293,10 @@ struct MainMenuView: View {
                 destination: AnyView(AppSettingsView())
             )
         ]
+    }
+    
+    private func reorderedItems() -> [ReorderManager.ReorderableMenuItem] {
+        return reorderManager.activeItems
     }
     
     private func currentAccountTypes() -> Set<AccountType> {

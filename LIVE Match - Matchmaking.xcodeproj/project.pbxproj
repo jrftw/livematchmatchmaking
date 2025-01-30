@@ -31,8 +31,8 @@
 		79FB21102D494B0B005CB891 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 79FB210F2D494B0B005CB891 /* FirebaseStorage */; };
 		79FB21122D494B0B005CB891 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 79FB21112D494B0B005CB891 /* FirebaseStorageCombine-Community */; };
 		79FB21142D494B0B005CB891 /* FirebaseVertexAI in Frameworks */ = {isa = PBXBuildFile; productRef = 79FB21132D494B0B005CB891 /* FirebaseVertexAI */; };
-		79FB21872D497D8D005CB891 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = 79FB21862D497D8D005CB891 /* GoogleUserMessagingPlatform */; };
-		79FB218A2D497D9B005CB891 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 79FB21892D497D9B005CB891 /* GoogleMobileAds */; };
+		79FB21872D497D8D005CB891 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; platformFilters = (ios, xros, ); productRef = 79FB21862D497D8D005CB891 /* GoogleUserMessagingPlatform */; };
+		79FB218A2D497D9B005CB891 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; platformFilters = (ios, xros, ); productRef = 79FB21892D497D9B005CB891 /* GoogleMobileAds */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */

@@ -1,12 +1,16 @@
-// MARK: File 17 (continued): CreatorVsCreatorView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// “Tinder style” approach for scheduling Creator vs. Creator matches.
+//
+//  CreatorVsCreatorView.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  “Tinder style” approach for scheduling Creator vs. Creator matches.
+//
 
 import SwiftUI
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-struct CreatorVsCreatorView: View {
-    let platform: LivePlatformOption
+public struct CreatorVsCreatorView: View {
+    public let platform: LivePlatformOption
     
     @State private var selectedTime: MatchTimeOption = .now
     @State private var selectedType: MatchTypeOption = .oneAndDone
@@ -17,19 +21,23 @@ struct CreatorVsCreatorView: View {
         .init(id: "3", name: "CreatorGamma"),
     ]
     
-    var body: some View {
+    public init(platform: LivePlatformOption) {
+        self.platform = platform
+    }
+    
+    public var body: some View {
         VStack(spacing: 20) {
             Picker("Time Option", selection: $selectedTime) {
-                ForEach(MatchTimeOption.allCases, id: \.self) {
-                    Text($0.rawValue)
+                ForEach(MatchTimeOption.allCases, id: \.self) { option in
+                    Text(option.rawValue)
                 }
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
             
             Picker("Type", selection: $selectedType) {
-                ForEach(MatchTypeOption.allCases, id: \.self) {
-                    Text($0.rawValue)
+                ForEach(MatchTypeOption.allCases, id: \.self) { type in
+                    Text(type.rawValue)
                 }
             }
             .pickerStyle(.segmented)

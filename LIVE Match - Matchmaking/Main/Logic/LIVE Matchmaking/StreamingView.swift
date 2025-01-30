@@ -2,19 +2,16 @@
 //  StreamingView.swift
 //  LIVE Match - Matchmaking
 //
-//  Created by Kevin Doyle Jr. on 1/28/25.
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  LIVE Streaming “matchmaking” screen with “Creator vs Creator,” bracket setups, plus “My Brackets.”
 //
-
-// MARK: File 17: StreamingView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// LIVE Streaming “matchmaking” screen with “Creator vs Creator,” bracket setups, plus “My Brackets.”
 
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-struct StreamingView: View {
+public struct StreamingView: View {
     private let platforms: [LivePlatformOption] = [
         .init(name: "TikTok"),
         .init(name: "Favorited"),
@@ -27,7 +24,9 @@ struct StreamingView: View {
         .init(name: "kick")
     ]
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         NavigationView {
             List {
                 Section(header: Text("Platforms")) {
@@ -44,23 +43,32 @@ struct StreamingView: View {
             }
             .navigationTitle("LIVE Streaming")
         }
+        #if os(iOS) || os(visionOS)
         .navigationViewStyle(StackNavigationViewStyle())
+        #endif
     }
 }
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-struct StreamingPlatformDetailView: View {
-    let platform: LivePlatformOption
+public struct StreamingPlatformDetailView: View {
+    public let platform: LivePlatformOption
     
-    var body: some View {
+    public init(platform: LivePlatformOption) {
+        self.platform = platform
+    }
+    
+    public var body: some View {
         List {
             Section(header: Text("Match Options")) {
                 NavigationLink("Creator vs Creator", destination: CreatorVsCreatorView(platform: platform))
             }
             Section(header: Text("Bracket Options")) {
-                NavigationLink("CN Internal Bracket", destination: AdvancedBracketCreationView(title: "CN Internal Bracket", platform: platform))
-                NavigationLink("Agency Internal Bracket", destination: AdvancedBracketCreationView(title: "Agency Internal Bracket", platform: platform))
-                NavigationLink("Open Bracket", destination: AdvancedBracketCreationView(title: "Open Bracket", platform: platform))
+                NavigationLink("CN Internal Bracket",
+                               destination: AdvancedBracketCreationView(title: "CN Internal Bracket", platform: platform))
+                NavigationLink("Agency Internal Bracket",
+                               destination: AdvancedBracketCreationView(title: "Agency Internal Bracket", platform: platform))
+                NavigationLink("Open Bracket",
+                               destination: AdvancedBracketCreationView(title: "Open Bracket", platform: platform))
             }
         }
         .navigationTitle(platform.name)

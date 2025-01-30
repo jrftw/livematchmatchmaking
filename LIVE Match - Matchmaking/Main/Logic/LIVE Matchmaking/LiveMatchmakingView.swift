@@ -1,11 +1,15 @@
-// MARK: File 1: LiveMatchmakingView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Main entry list of platforms for LIVE matchmaking.
+//
+//  LiveMatchmakingView.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  Main entry list of platforms for LIVE matchmaking.
+//
 
 import SwiftUI
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-struct LiveMatchmakingView: View {
+public struct LiveMatchmakingView: View {
     @State private var selectedPlatform: LivePlatformOption? = nil
     
     private let platforms: [LivePlatformOption] = [
@@ -20,7 +24,9 @@ struct LiveMatchmakingView: View {
         .init(name: "kick")
     ]
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         NavigationView {
             List(platforms) { platform in
                 NavigationLink(destination: PlatformDetailView(platform: platform)) {
@@ -29,6 +35,8 @@ struct LiveMatchmakingView: View {
             }
             .navigationTitle("LIVE Matchmaking")
         }
+        #if os(iOS) || os(visionOS)
         .navigationViewStyle(StackNavigationViewStyle())
+        #endif
     }
 }
