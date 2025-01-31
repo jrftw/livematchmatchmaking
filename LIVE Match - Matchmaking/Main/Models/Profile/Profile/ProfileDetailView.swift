@@ -1,35 +1,98 @@
 //
-//  PlatformDetailView.swift
+//  ProfileDetailView.swift
+//  LIVE Match - Matchmaking
+//
+//  Created by Kevin Doyle Jr. on 1/31/25.
+//
+
+
+//
+//  ProfileDetailView.swift
 //  LIVE Match - Matchmaking
 //
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Allows selecting "Creator vs Creator" or bracket setups for a given platform.
+//  Displays details of a given UserProfile.
 //
-
 import SwiftUI
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-public struct PlatformDetailView: View {
-    public let platform: LivePlatformOption
+public struct ProfileDetailView: View {
+    public let profile: UserProfile
     
-    public init(platform: LivePlatformOption) {
-        self.platform = platform
+    public init(profile: UserProfile) {
+        self.profile = profile
     }
     
     public var body: some View {
-        List {
-            Section(header: Text("Match Options")) {
-                NavigationLink("Creator vs Creator", destination: CreatorVsCreatorView(platform: platform))
+        ScrollView {
+            VStack(spacing: 12) {
+                Text(profile.name.isEmpty ? "No Name" : profile.name)
+                    .font(.title)
+                
+                if let banner = profile.bannerURL, !banner.isEmpty {
+                    AsyncImage(url: URL(string: banner)) { phase in
+                        switch phase {
+                        case .empty:
+                            ProgressView()
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 200)
+                        case .failure:
+                            Color.red.frame(height: 200)
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                }
+                
+                if let pic = profile.profilePictureURL, !pic.isEmpty {
+                    AsyncImage(url: URL(string: pic)) { phase in
+                        switch phase {
+                        case .empty:
+                            ProgressView()
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                        case .failure:
+                            Circle()
+                                .fill(Color.gray)
+                                .frame(width: 100, height: 100)
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                }
+                
+                Text(profile.bio)
+                    .padding(.horizontal)
+                
+                let typeList = profile.accountTypes.map { $0.rawValue.capitalized }.joined(separator: ", ")
+                Text("Account Types: \(typeList)")
+                
+                if !profile.tags.isEmpty {
+                    Text("Tags: \(profile.tags.joined(separator: ", "))")
+                }
+                
+                Text("Followers: \(profile.followers)")
+                Text("Friends: \(profile.friends)")
+                Text("Wins: \(profile.wins) | Losses: \(profile.losses)")
+                
+                if let clan = profile.clanTag, !clan.isEmpty {
+                    Text("Clan: \(clan)")
+                }
+                if let est = profile.establishedDate, !est.isEmpty {
+                    Text("Established: \(est)")
+                }
+                
+                // Additional sections as needed...
             }
-            Section(header: Text("Bracket Options")) {
-                NavigationLink("CN Internal Bracket",
-                               destination: AdvancedBracketCreationView(title: "CN Internal Bracket", platform: platform))
-                NavigationLink("Agency Internal Bracket",
-                               destination: AdvancedBracketCreationView(title: "Agency Internal Bracket", platform: platform))
-                NavigationLink("Open Bracket",
-                               destination: AdvancedBracketCreationView(title: "Open Bracket", platform: platform))
-            }
+            .padding()
         }
-        .navigationTitle(platform.name)
+        .navigationTitle(profile.name.isEmpty ? "Profile" : profile.name)
     }
 }

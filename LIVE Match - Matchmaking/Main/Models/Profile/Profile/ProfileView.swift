@@ -5,6 +5,7 @@
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
 //  A basic form saving minimal profile data to a "profiles" collection.
 //
+
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore

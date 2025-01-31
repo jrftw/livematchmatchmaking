@@ -1,10 +1,15 @@
-// MARK: RootContainerView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Hosts the entire app with a custom bottom bar that remains visible and doesn't block interactions.
+//
+//  RootContainerView.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  Hosts the entire app with a custom bottom bar that remains visible and doesn't block interactions.
+//
 
 import SwiftUI
 import FirebaseAuth
 
+// MARK: - MainScreen Enum
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public enum MainScreen {
     case menu
@@ -13,6 +18,7 @@ public enum MainScreen {
     case profile
 }
 
+// MARK: - RootContainerView
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct RootContainerView: View {
     @State private var selectedScreen: MainScreen = .menu
@@ -57,6 +63,8 @@ public struct RootContainerView: View {
             
         case .profile:
             NavigationView {
+                // Ensure that ProfileHomeView is defined somewhere in your project.
+                // If it's in another file, just import it.
                 ProfileHomeView()
                     .navigationBarTitleDisplayMode(.inline)
                     .navigationTitle("Profile")
