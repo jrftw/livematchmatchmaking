@@ -1,11 +1,6 @@
-//
-//  AdvancedBracketCreationView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  A comprehensive bracket creation flow that supports editing bracket details,
-//  adding real data for bracket participants, inviting creators, and selecting a predefined timezone.
-//
+// File: AdvancedBracketCreationView.swift
+// MARK: AdvancedBracketCreationView.swift
+// iOS 15.6+, macOS 11.5, visionOS 2.0+
 
 import SwiftUI
 import FirebaseFirestore
@@ -75,9 +70,7 @@ public struct AdvancedBracketCreationView: View {
                     } else {
                         ForEach(entries.indices, id: \.self) { idx in
                             NavigationLink(destination: EditBracketEntryView(entry: $entries[idx])) {
-                                Text(entries[idx].username.isEmpty
-                                     ? "Unnamed Participant"
-                                     : entries[idx].username)
+                                Text(entries[idx].username.isEmpty ? "Unnamed Participant" : entries[idx].username)
                             }
                         }
                     }
@@ -101,25 +94,28 @@ public struct AdvancedBracketCreationView: View {
         }
     }
     
+    // MARK: - Load Bracket Creator Name
     private func fetchBracketCreatorName() {
         guard let uid = Auth.auth().currentUser?.uid else {
             bracketCreator = "Guest or Unknown"
             return
         }
         let db = FirebaseManager.shared.db
-        db.collection("users").document(uid).getDocument { snap, err in
-            if let err = err {
-                print("Error fetching user profile: \(err.localizedDescription)")
+        
+        db.collection("users").document(uid).getDocument { docSnap, error in
+            if let error = error {
+                print("Error fetching user profile: \(error.localizedDescription)")
                 bracketCreator = "UnknownUser"
                 return
             }
-            guard let doc = snap, doc.exists else {
+            guard let docSnap = docSnap, docSnap.exists else {
                 bracketCreator = "UnknownUser"
                 return
             }
+            
             do {
-                let userProfile = try doc.data(as: UserProfile.self)
-                bracketCreator = userProfile.name
+                let userProfile = try docSnap.data(as: UserProfile.self)
+                bracketCreator = userProfile.username
             } catch {
                 print("Failed to decode user profile: \(error.localizedDescription)")
                 bracketCreator = "UnknownUser"
@@ -127,6 +123,7 @@ public struct AdvancedBracketCreationView: View {
         }
     }
     
+    // MARK: - Add Manual Entry
     private func addManualEntry() {
         let newEntry = BracketEntry(
             username: "",
@@ -148,6 +145,7 @@ public struct AdvancedBracketCreationView: View {
         entries.append(newEntry)
     }
     
+    // MARK: - Create Bracket
     private func createBracket() {
         let bracketDoc: [String: Any] = [
             "title": title,
@@ -172,6 +170,7 @@ public struct AdvancedBracketCreationView: View {
         }
     }
     
+    // MARK: - Share Bracket
     private func shareBracket() {
         print("Sharing bracket with external apps… (placeholder)")
     }
