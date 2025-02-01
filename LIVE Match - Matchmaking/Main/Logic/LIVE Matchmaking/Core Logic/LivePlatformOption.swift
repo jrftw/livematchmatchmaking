@@ -1,7 +1,11 @@
-// MARK: File: LivePlatformOption.swift
-// Make this public so it can be used by public properties or initializers in other modules.
+//
+//  LivePlatformOption.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  A single source of truth for platforms (TikTok, YouTube, etc.).
+//
 
-import Foundation
 import SwiftUI
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)

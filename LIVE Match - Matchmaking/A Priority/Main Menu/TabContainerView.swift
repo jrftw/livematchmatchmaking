@@ -1,6 +1,6 @@
-// File: TabContainerView.swift
 // MARK: TabContainerView.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// A simple TabView demonstration if you prefer tabs instead of bottom bar.
 
 import SwiftUI
 import FirebaseAuth

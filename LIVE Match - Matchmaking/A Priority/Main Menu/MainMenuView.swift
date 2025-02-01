@@ -1,26 +1,48 @@
-// MARK: MainMenuView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// A production-ready menu view with reorderable layout and membership-based tabs.
+//
+//  MainMenuView.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  A membership-based main menu that can be edited/reordered/hidden using ReorderManager,
+//  now includes a top banner ad if the user has not subscribed to remove ads.
+//
 
 import SwiftUI
 import FirebaseAuth
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-struct MainMenuView: View {
+public struct MainMenuView: View {
     @ObservedObject private var authManager = AuthManager.shared
     @StateObject private var reorderManager = ReorderManager()
     @State private var isEditingLayout = false
     
-    struct MenuItem: Identifiable {
-        let id = UUID()
-        let title: String
-        let icon: String
-        let color: Color
-        let destination: AnyView
+    // We assume your user profile or membership logic includes a `hasRemoveAds` (or similar) boolean.
+    // If the user is subscribed to "Remove Ads," we hide the banner.
+    
+    // Make it public so ReorderManager can reference [MainMenuView.MenuItem] publicly.
+    public struct MenuItem: Identifiable {
+        public let id = UUID()
+        public let title: String
+        public let icon: String
+        public let color: Color
+        public let destination: AnyView
+        
+        // If you need hiding:
+        // public var isHidden: Bool = false
+        
+        public init(title: String, icon: String, color: Color, destination: AnyView) {
+            self.title = title
+            self.icon = icon
+            self.color = color
+            self.destination = destination
+        }
     }
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         ZStack {
+            // Background gradient
             LinearGradient(
                 gradient: Gradient(colors: [.white, .gray.opacity(0.1)]),
                 startPoint: .top,
@@ -29,10 +51,21 @@ struct MainMenuView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
+                
+                // --- Banner Ad at top, only if not subscribed and on iOS ---
+                if !hideAds {
+                    #if canImport(UIKit)
+                    BannerAdView()
+                        .frame(height: 50)  // typical banner height
+                    #endif
+                }
+                
+                // Title
                 Text("Main Menu")
                     .font(.largeTitle)
                     .padding(.top, 30)
                 
+                // Edit Layout Button
                 Button(isEditingLayout ? "Done" : "Edit Layout") {
                     isEditingLayout.toggle()
                 }
@@ -41,38 +74,41 @@ struct MainMenuView: View {
                 
                 Spacer(minLength: 10)
                 
+                // Grid of items
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 20)]) {
                         ForEach(reorderManager.activeItems, id: \.id) { item in
-                            NavigationLink(destination: item.destination) {
-                                VStack(spacing: 12) {
-                                    Image(systemName: item.icon)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 40, height: 40)
-                                        .padding()
-                                        .background(item.color.opacity(0.15))
-                                        .clipShape(Circle())
-                                    Text(item.title)
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
+                            if !item.isHidden {
+                                NavigationLink(destination: item.destination) {
+                                    VStack(spacing: 12) {
+                                        Image(systemName: item.icon)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 40, height: 40)
+                                            .padding()
+                                            .background(item.color.opacity(0.15))
+                                            .clipShape(Circle())
+                                        Text(item.title)
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(item.color.opacity(0.2))
+                                    )
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(item.color.opacity(0.2))
+                                .overlay(
+                                    DraggableHandleOverlay(
+                                        isEditing: isEditingLayout,
+                                        title: item.title,
+                                        reorderManager: reorderManager
+                                    )
+                                    .offset(x: 40, y: -40)
+                                    .opacity(shouldShowDragOverlay(title: item.title) ? 1 : 0)
                                 )
                             }
-                            .overlay(
-                                DraggableHandleOverlay(
-                                    isEditing: isEditingLayout,
-                                    title: item.title,
-                                    reorderManager: reorderManager
-                                )
-                                .offset(x: 40, y: -40)
-                                .opacity(shouldShowDragOverlay(title: item.title) ? 1 : 0)
-                            )
                         }
                     }
                     .padding(.horizontal)
@@ -84,11 +120,25 @@ struct MainMenuView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
+            // Build the final array of items
             let items = buildMenuItems()
+            // Load them into reorderManager
             reorderManager.loadItems(with: items)
         }
     }
     
+    // MARK: - Hide Ads Check
+    private var hideAds: Bool {
+        guard let profile = fetchUserProfile() else {
+            // If not logged in or no profile, show ads
+            return false
+        }
+        // If the user has subscribed to "Remove Ads," hide it:
+        // e.g., `profile.hasRemoveAds` or your subscription logic
+        return profile.hasRemoveAds
+    }
+    
+    // Show drag overlay if editing, except for certain blocked items (like "Settings")
     private func shouldShowDragOverlay(title: String) -> Bool {
         guard isEditingLayout else { return false }
         return (title != "Settings")
@@ -113,7 +163,7 @@ struct MainMenuView: View {
                 title: "Create Account or Log In",
                 icon: "person.crop.circle.badge.plus",
                 color: .blue,
-                destination: AnyView(SignInView()) // Updated to SignInView
+                destination: AnyView(SignInView())
             ),
             MenuItem(
                 title: "Settings",
@@ -127,36 +177,33 @@ struct MainMenuView: View {
     private func memberOrOwnerItems(profile: MyUserProfile) -> [MenuItem] {
         var result: [MenuItem] = []
         
-        if profile.accountTypes.contains(.creator) || profile.accountTypes.contains(.gamer) {
-            result.append(
-                MenuItem(
-                    title: "LIVE Matchmaking",
-                    icon: "video.fill",
-                    color: .purple,
-                    destination: AnyView(StreamingView())
-                )
+        // Everyone sees these:
+        result.append(
+            MenuItem(
+                title: "LIVE Matchmaking",
+                icon: "video.fill",
+                color: .purple,
+                destination: AnyView(StreamingView())
             )
-            result.append(
-                MenuItem(
-                    title: "Game Matchmaking",
-                    icon: "gamecontroller.fill",
-                    color: .blue,
-                    destination: AnyView(MatchmakingView())
-                )
+        )
+        result.append(
+            MenuItem(
+                title: "Game Matchmaking",
+                icon: "gamecontroller.fill",
+                color: .blue,
+                destination: AnyView(MatchmakingView())
             )
-        }
+        )
+        result.append(
+            MenuItem(
+                title: "Tournaments",
+                icon: "rosette",
+                color: .red,
+                destination: AnyView(TournamentListView())
+            )
+        )
         
-        if profile.accountTypes.contains(.viewer) {
-            result.append(
-                MenuItem(
-                    title: "Tournaments",
-                    icon: "rosette",
-                    color: .red,
-                    destination: AnyView(TournamentListView())
-                )
-            )
-        }
-        
+        // Achievements & Leaderboards for non-guest
         if !profile.accountTypes.contains(.guest) {
             result.append(
                 MenuItem(
@@ -176,6 +223,7 @@ struct MainMenuView: View {
             )
         }
         
+        // Membership booleans
         if profile.hasCommunityMembership {
             result.append(
                 MenuItem(
@@ -227,6 +275,7 @@ struct MainMenuView: View {
             )
         }
         
+        // Admin checks
         if profile.isCommunityAdmin {
             result.append(
                 MenuItem(
@@ -278,6 +327,7 @@ struct MainMenuView: View {
             )
         }
         
+        // Always add Settings
         result.append(
             MenuItem(
                 title: "Settings",
@@ -292,6 +342,7 @@ struct MainMenuView: View {
     
     private func fetchUserProfile() -> MyUserProfile? {
         guard let user = authManager.user else {
+            // If guest
             if authManager.isGuest {
                 return MyUserProfile(
                     id: nil,
@@ -329,13 +380,14 @@ struct MainMenuView: View {
                     hasAgencyMembership: false,
                     isAgencyAdmin: false,
                     hasCreatorNetworkMembership: false,
-                    isCreatorNetworkAdmin: false
+                    isCreatorNetworkAdmin: false,
+                    hasRemoveAds: false // <-- add this or track in another field
                 )
             }
             return nil
         }
         
-        // Example fallback profile
+        // Example fallback if user is present
         let example = MyUserProfile(
             id: user.uid,
             accountTypes: [.viewer, .creator],
@@ -372,7 +424,8 @@ struct MainMenuView: View {
             hasAgencyMembership: false,
             isAgencyAdmin: false,
             hasCreatorNetworkMembership: false,
-            isCreatorNetworkAdmin: false
+            isCreatorNetworkAdmin: false,
+            hasRemoveAds: false // or set to true to hide banner
         )
         return example
     }

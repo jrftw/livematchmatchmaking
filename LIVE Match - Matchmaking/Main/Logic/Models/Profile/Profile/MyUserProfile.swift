@@ -3,7 +3,7 @@
 //  LIVE Match - Matchmaking
 //
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  An alternate user profile model, if needed.
+//  An alternate user profile model, now with `hasRemoveAds`.
 //
 
 import SwiftUI
@@ -60,6 +60,10 @@ public struct MyUserProfile: Codable, Identifiable {
     public var hasCreatorNetworkMembership: Bool
     public var isCreatorNetworkAdmin: Bool
     
+    /// Indicates if the user has subscribed to "Remove Ads."
+    public var hasRemoveAds: Bool
+    
+    // MARK: - Init
     public init(
         id: String? = nil,
         accountTypes: [AccountType],
@@ -96,7 +100,8 @@ public struct MyUserProfile: Codable, Identifiable {
         hasAgencyMembership: Bool,
         isAgencyAdmin: Bool,
         hasCreatorNetworkMembership: Bool,
-        isCreatorNetworkAdmin: Bool
+        isCreatorNetworkAdmin: Bool,
+        hasRemoveAds: Bool = false  // <--- ADDED, defaults to false
     ) {
         self.id = id
         self.accountTypes = accountTypes
@@ -134,5 +139,8 @@ public struct MyUserProfile: Codable, Identifiable {
         self.isAgencyAdmin = isAgencyAdmin
         self.hasCreatorNetworkMembership = hasCreatorNetworkMembership
         self.isCreatorNetworkAdmin = isCreatorNetworkAdmin
+        
+        // New field for "Remove Ads"
+        self.hasRemoveAds = hasRemoveAds
     }
 }

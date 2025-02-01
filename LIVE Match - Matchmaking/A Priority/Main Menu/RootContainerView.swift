@@ -1,5 +1,6 @@
 // MARK: RootContainerView.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// A container with a bottom bar, switching to various screens.
 
 import SwiftUI
 import FirebaseAuth

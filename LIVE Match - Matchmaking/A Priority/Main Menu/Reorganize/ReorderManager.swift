@@ -1,10 +1,13 @@
 // MARK: ReorderManager.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// Manages reorderable menu items, including optional hide/unhide.
 
 import SwiftUI
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public final class ReorderManager: ObservableObject {
+    
+    // Each item can be hidden or shown. 'sortOrder' determines its position.
     public struct ReorderableMenuItem: Identifiable {
         public let id: UUID
         public var title: String
@@ -13,13 +16,17 @@ public final class ReorderManager: ObservableObject {
         public var destination: AnyView
         public var sortOrder: Int
         
+        // Toggle for user to hide or unhide
+        public var isHidden: Bool
+        
         public init(
             id: UUID,
             title: String,
             icon: String,
             color: Color,
             destination: AnyView,
-            sortOrder: Int
+            sortOrder: Int,
+            isHidden: Bool = false
         ) {
             self.id = id
             self.title = title
@@ -27,15 +34,19 @@ public final class ReorderManager: ObservableObject {
             self.color = color
             self.destination = destination
             self.sortOrder = sortOrder
+            self.isHidden = isHidden
         }
     }
     
     @Published public private(set) var activeItems: [ReorderableMenuItem] = []
+    
+    // 'Settings' is pinned at the bottom
     private let settingsKey = "Settings"
     
     public init() {}
     
-    func loadItems(with items: [MainMenuView.MenuItem]) {
+    // Convert from MainMenuView.MenuItem to ReorderableMenuItem
+    public func loadItems(with items: [MainMenuView.MenuItem]) {
         var reorderables: [ReorderableMenuItem] = []
         for (index, raw) in items.enumerated() {
             let forcedOrder = (raw.title == settingsKey) ? 9999 : index
@@ -45,35 +56,47 @@ public final class ReorderManager: ObservableObject {
                 icon: raw.icon,
                 color: raw.color,
                 destination: raw.destination,
-                sortOrder: forcedOrder
+                sortOrder: forcedOrder,
+                isHidden: false
             )
             reorderables.append(reorderable)
         }
+        // Sort by sortOrder
         self.activeItems = reorderables.sorted { $0.sortOrder < $1.sortOrder }
     }
     
-    func moveItemUp(_ title: String) {
-        guard let index = activeItems.firstIndex(where: { $0.title == title }) else { return }
-        if activeItems[index].title == settingsKey { return }
-        guard index > 0 else { return }
+    // Move item up
+    public func moveItemUp(_ title: String) {
+        guard let idx = activeItems.firstIndex(where: { $0.title == title }) else { return }
+        guard idx > 0 else { return }
+        if activeItems[idx].title == settingsKey { return }
+        if activeItems[idx - 1].title == settingsKey { return }
         
-        if activeItems[index - 1].title == settingsKey { return }
-        
-        activeItems.swapAt(index, index - 1)
+        activeItems.swapAt(idx, idx - 1)
         updateSortOrders()
     }
     
-    func moveItemDown(_ title: String) {
-        guard let index = activeItems.firstIndex(where: { $0.title == title }) else { return }
-        if activeItems[index].title == settingsKey { return }
-        guard index < activeItems.count - 1 else { return }
+    // Move item down
+    public func moveItemDown(_ title: String) {
+        guard let idx = activeItems.firstIndex(where: { $0.title == title }) else { return }
+        guard idx < activeItems.count - 1 else { return }
+        if activeItems[idx].title == settingsKey { return }
+        if activeItems[idx + 1].title == settingsKey { return }
         
-        if activeItems[index + 1].title == settingsKey { return }
-        
-        activeItems.swapAt(index, index + 1)
+        activeItems.swapAt(idx, idx + 1)
         updateSortOrders()
     }
     
+    // Toggle hidden
+    public func toggleHidden(_ title: String) {
+        guard let idx = activeItems.firstIndex(where: { $0.title == title }) else { return }
+        // If it's 'Settings', skip
+        if activeItems[idx].title == settingsKey { return }
+        
+        activeItems[idx].isHidden.toggle()
+    }
+    
+    // Recompute order after a move
     private func updateSortOrders() {
         for i in activeItems.indices {
             if activeItems[i].title == settingsKey {
