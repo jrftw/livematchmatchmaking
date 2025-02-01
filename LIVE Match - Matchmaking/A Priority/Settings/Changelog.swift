@@ -102,6 +102,20 @@ public struct Changelog {
                 "Strengthened error handling and logging in bracket features.",
                 "General performance improvements and code refactoring for future expansions."
             ]
+        ),
+        ChangelogEntry(
+            version: "1.0",
+            build: "4",
+            releaseDate: "2/2/25",
+            changes: [
+                "Introduced advanced bracket analytics dashboard for organizers.",
+                "Refined location-based time zone detection with fallback logic.",
+                "Enhanced Discord integration for community engagement.",
+                "Improved push notifications for user matchmaking events and updates.",
+                "Optimized UI performance on older iPads and Apple Silicon Macs.",
+                "Resolved minor layout issues on visionOS headsets.",
+                "Extended logging for troubleshooting bracket scheduling conflicts."
+            ]
         )
     ]
 }

@@ -8,25 +8,19 @@
 //
 
 import SwiftUI
-import CoreLocation // if you plan to detect region specifically
+import CoreLocation
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct AppSettingsView: View {
-    // Appearance
     @AppStorage("appColorScheme") private var appColorScheme: String = "system"
-    
-    // Timezone: We'll store the user’s chosen default
     @AppStorage("defaultTimezone") private var defaultTimezone: String = ""
     
     @State private var showChangelog = false
-    
-    // A simple location manager (if you want to guess region from user location)
     @StateObject private var locationManager = LocationRegionDetector()
     
     public var body: some View {
         NavigationView {
             Form {
-                
                 // MARK: - Add On
                 Section("Add On") {
                     NavigationLink("Manage Add-Ons") {
@@ -46,6 +40,9 @@ public struct AppSettingsView: View {
                 // MARK: - Version
                 versionSection
                 
+                // MARK: - Support
+                supportSection
+                
                 // MARK: - Footer
                 footerSection
             }
@@ -57,7 +54,6 @@ public struct AppSettingsView: View {
                 applyColorScheme(newValue)
             }
             .onAppear {
-                // If no stored timezone, detect system or location-based
                 if defaultTimezone.isEmpty {
                     detectInitialTimeZone()
                 }
@@ -118,6 +114,18 @@ public struct AppSettingsView: View {
         }
     }
     
+    // MARK: - Support
+    private var supportSection: some View {
+        Section("Support") {
+            Button("Contact") {
+                openMail()
+            }
+            Button("Join the Discord") {
+                openDiscord()
+            }
+        }
+    }
+    
     // MARK: - Footer
     private var footerSection: some View {
         Section {
@@ -131,7 +139,6 @@ public struct AppSettingsView: View {
     private func applyColorScheme(_ scheme: String) {
         #if !os(macOS)
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
-        
         switch scheme {
         case "light":
             scene.windows.forEach { $0.overrideUserInterfaceStyle = .light }
@@ -145,14 +152,28 @@ public struct AppSettingsView: View {
     
     // MARK: - Detect or Default Timezone
     private func detectInitialTimeZone() {
-        // 1) If location permission is authorized & we have a region guess, use it.
         if let regionTZ = locationManager.detectedTimeZone {
             defaultTimezone = regionTZ
         } else {
-            // 2) Fallback to system's local time zone
             let systemTZ = TimeZone.current
             defaultTimezone = systemTZ.identifier
         }
-        print("Initialized default timezone to \(defaultTimezone)")
+    }
+    
+    // MARK: - Helpers
+    private func openMail() {
+        #if !os(macOS)
+        if let url = URL(string: "mailto:jrftw@infinitumlive.com") {
+            UIApplication.shared.open(url)
+        }
+        #endif
+    }
+    
+    private func openDiscord() {
+        #if !os(macOS)
+        if let url = URL(string: "https://discord.gg/placeholder") {
+            UIApplication.shared.open(url)
+        }
+        #endif
     }
 }
