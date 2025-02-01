@@ -77,12 +77,30 @@ public struct Changelog {
             changes: [
                 "Added Template CSV download for brackets.",
                 "Improved bracket creation with predefined time zones.",
+                "Enhanced bracket creation wizard with a streamlined UI.",
                 "Fixed bottom bar navigation glitch (Menu icon now toggles properly).",
                 "Introduced reorderable Main Menu layout (Edit Layout mode).",
                 "Enabled Achievements page for non-guest users.",
                 "Enhanced messaging with group chat, direct messages, and reactions.",
                 "Improved synergy for macOS and visionOS, ensuring consistent UI.",
-                "Implemented robust code reorganization for better performance and clarity."
+                "Implemented robust code reorganization for better performance and clarity.",
+                "Various bug fixes and UI refinements to improve stability."
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.0",
+            build: "3",
+            releaseDate: "2/1/25",
+            changes: [
+                "Enabled in-app push notifications for real-time updates.",
+                "Refined Info.plist with correct usage descriptions for location tracking.",
+                "Resolved Apple validation issue regarding missing NSLocationWhenInUseUsageDescription.",
+                "Increased build number to 3 and improved background remote notification handling.",
+                "Implemented additional analytics events and crash reporting for better insights.",
+                "Enhanced reliability of match scheduling logic with improved date/time zone handling.",
+                "Unified UI design for iOS, macOS, and visionOS with optimized layout scaling.",
+                "Strengthened error handling and logging in bracket features.",
+                "General performance improvements and code refactoring for future expansions."
             ]
         )
     ]

@@ -20,7 +20,7 @@
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>
-    <string>2</string>
+    <string>4</string>
     
     <!-- Firebase & Remote Notifications -->
     <key>UIBackgroundModes</key>
@@ -35,10 +35,8 @@
     <string>We need photo library access so you can select a profile picture or other media.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Microphone access is required for live streaming audio or voice chats.</string>
-    <!-- If the app uses location:
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We use your location to enhance your matchmaking experience.</string>
-    -->
+    <string>Location is used to determine your time zone and enhance matchmaking scheduling.</string>
     
     <!-- AdMob Application Identifier -->
     <key>GADApplicationIdentifier</key>
@@ -86,13 +84,12 @@
         </dict>
     </array>
     
-    <!-- iOS 14+ Tracking Transparency (if you want personalized ads) -->
+    <!-- iOS 14+ Tracking Transparency -->
     <key>NSUserTrackingUsageDescription</key>
     <string>We use your device identifier to provide personalized ads and improve your experience.</string>
     
-    <!-- If In-App Messaging or manual push integration:
+    <!-- Enable in-app push / manual push integration -->
     <key>FirebaseAppDelegateProxyEnabled</key>
-    <false/>
-    -->
+    <true/>
 </dict>
 </plist>
