@@ -59,6 +59,20 @@ public struct SettingsFooterView: View {
                     .underline()
             }
             
+            // MARK: - License Agreement
+            let _ = print("[SettingsFooterView] Adding NavigationLink => 'License Agreement'")
+            NavigationLink(
+                destination: WebLinkView(
+                    title: "License Agreement",
+                    urlString: "https://infinitumlive.com/live-match-matchmaking-license-agreement/"
+                )
+            ) {
+                Text("License Agreement")
+                    .font(.footnote)
+                    .foregroundColor(.blue)
+                    .underline()
+            }
+            
             let _ = print("[SettingsFooterView] Adding NavigationLink => 'Ownership'")
             NavigationLink(destination: OwnershipView()) {
                 Text("Ownership")
