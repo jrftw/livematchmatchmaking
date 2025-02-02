@@ -221,7 +221,7 @@ public struct AppSettingsView: View {
     private func openDiscord() {
         let _ = print("[AppSettingsView] openDiscord called.")
         #if !os(macOS)
-        if let url = URL(string: "https://discord.gg/placeholder") {
+        if let url = URL(string: "https://discord.gg/gJK9PH4eDR") {
             UIApplication.shared.open(url)
         }
         #endif
