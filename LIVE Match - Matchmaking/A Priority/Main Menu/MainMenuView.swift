@@ -5,6 +5,7 @@
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
 //  A membership-based main menu that can be edited/reordered/hidden using ReorderManager,
 //  now includes a top banner ad if the user has not subscribed to remove ads.
+//  This file references MyUserProfile's updated init with consistent parameters.
 //
 
 import SwiftUI
@@ -12,14 +13,13 @@ import FirebaseAuth
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct MainMenuView: View {
+    
+    // MARK: - Observed & State
     @ObservedObject private var authManager = AuthManager.shared
     @StateObject private var reorderManager = ReorderManager()
     @State private var isEditingLayout = false
     
-    // We assume your user profile or membership logic includes a `hasRemoveAds` (or similar) boolean.
-    // If the user is subscribed to "Remove Ads," we hide the banner.
-    
-    // Make it public so ReorderManager can reference [MainMenuView.MenuItem] publicly.
+    // MARK: - MenuItem
     public struct MenuItem: Identifiable {
         public let id = UUID()
         public let title: String
@@ -28,21 +28,29 @@ public struct MainMenuView: View {
         public let destination: AnyView
         
         // If you need hiding:
-        // public var isHidden: Bool = false
+        public var isHidden: Bool = false
         
         public init(title: String, icon: String, color: Color, destination: AnyView) {
+            print("[MainMenuView.MenuItem] init => title: \(title), icon: \(icon)")
             self.title = title
             self.icon = icon
             self.color = color
             self.destination = destination
+            print("[MainMenuView.MenuItem] init completed.")
         }
     }
     
-    public init() {}
+    // MARK: - Init
+    public init() {
+        print("[MainMenuView] init called.")
+    }
     
+    // MARK: - Body
     public var body: some View {
-        ZStack {
-            // Background gradient
+        let _ = print("[MainMenuView] body invoked. Building layout.")
+        
+        return ZStack {
+            let _ = print("[MainMenuView] Creating background gradient.")
             LinearGradient(
                 gradient: Gradient(colors: [.white, .gray.opacity(0.1)]),
                 startPoint: .top,
@@ -52,21 +60,24 @@ public struct MainMenuView: View {
             
             VStack(spacing: 0) {
                 
-                // --- Banner Ad at top, only if not subscribed and on iOS ---
                 if !hideAds {
+                    let _ = print("[MainMenuView] hideAds == false => Displaying BannerAdView if iOS.")
                     #if canImport(UIKit)
                     BannerAdView()
-                        .frame(height: 50)  // typical banner height
+                        .frame(height: 50)
                     #endif
+                } else {
+                    let _ = print("[MainMenuView] hideAds == true => BannerAdView is hidden.")
                 }
                 
-                // Title
+                let _ = print("[MainMenuView] Adding 'Main Menu' title.")
                 Text("Main Menu")
                     .font(.largeTitle)
                     .padding(.top, 30)
                 
-                // Edit Layout Button
+                let _ = print("[MainMenuView] Adding Edit Layout button. isEditingLayout: \(isEditingLayout)")
                 Button(isEditingLayout ? "Done" : "Edit Layout") {
+                    print("[MainMenuView] Toggling isEditingLayout from \(isEditingLayout) to \(!isEditingLayout).")
                     isEditingLayout.toggle()
                 }
                 .font(.headline)
@@ -74,7 +85,7 @@ public struct MainMenuView: View {
                 
                 Spacer(minLength: 10)
                 
-                // Grid of items
+                let _ = print("[MainMenuView] Building ScrollView with lazy grid for menu items.")
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 20)]) {
                         ForEach(reorderManager.activeItems, id: \.id) { item in
@@ -108,6 +119,8 @@ public struct MainMenuView: View {
                                     .offset(x: 40, y: -40)
                                     .opacity(shouldShowDragOverlay(title: item.title) ? 1 : 0)
                                 )
+                            } else {
+                                let _ = print("[MainMenuView] Item '\(item.title)' isHidden == true, skipping display.")
                             }
                         }
                     }
@@ -120,45 +133,63 @@ public struct MainMenuView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            // Build the final array of items
+            print("[MainMenuView] onAppear => Loading menu items via buildMenuItems().")
             let items = buildMenuItems()
-            // Load them into reorderManager
+            print("[MainMenuView] onAppear => loadItems called with \(items.count) items.")
             reorderManager.loadItems(with: items)
         }
     }
     
-    // MARK: - Hide Ads Check
+    // MARK: - Hide Ads
     private var hideAds: Bool {
+        let _ = print("[MainMenuView] hideAds computed property accessed. Fetching user profile.")
         guard let profile = fetchUserProfile() else {
-            // If not logged in or no profile, show ads
+            print("[MainMenuView] hideAds => No profile found. Returning false.")
             return false
         }
-        // If the user has subscribed to "Remove Ads," hide it:
-        // e.g., `profile.hasRemoveAds` or your subscription logic
+        print("[MainMenuView] hideAds => profile.hasRemoveAds: \(profile.hasRemoveAds)")
         return profile.hasRemoveAds
     }
     
-    // Show drag overlay if editing, except for certain blocked items (like "Settings")
+    // MARK: - Drag Overlay
     private func shouldShowDragOverlay(title: String) -> Bool {
-        guard isEditingLayout else { return false }
-        return (title != "Settings")
+        let _ = print("[MainMenuView] shouldShowDragOverlay called for title: \(title). isEditingLayout: \(isEditingLayout)")
+        guard isEditingLayout else {
+            print("[MainMenuView] shouldShowDragOverlay => Not editing layout. Return false.")
+            return false
+        }
+        let result = (title != "Settings")
+        print("[MainMenuView] shouldShowDragOverlay => \(result).")
+        return result
     }
     
+    // MARK: - Build Items
     private func buildMenuItems() -> [MenuItem] {
+        let _ = print("[MainMenuView] buildMenuItems called. Checking user profile and states.")
+        
         guard let profile = fetchUserProfile() else {
+            print("[MainMenuView] buildMenuItems => No valid profile. Returning notLoggedInOrGuestItems.")
             return notLoggedInOrGuestItems()
         }
+        
         if authManager.user == nil, !authManager.isGuest {
+            print("[MainMenuView] buildMenuItems => user is nil & not guest => returning notLoggedInOrGuestItems.")
             return notLoggedInOrGuestItems()
         }
+        
         if profile.accountTypes.contains(.guest), authManager.isGuest {
+            print("[MainMenuView] buildMenuItems => profile/account is guest => returning notLoggedInOrGuestItems.")
             return notLoggedInOrGuestItems()
         }
+        
+        print("[MainMenuView] buildMenuItems => returning memberOrOwnerItems.")
         return memberOrOwnerItems(profile: profile)
     }
     
+    // MARK: - Guest Items
     private func notLoggedInOrGuestItems() -> [MenuItem] {
-        [
+        print("[MainMenuView] notLoggedInOrGuestItems => Building guest items array.")
+        return [
             MenuItem(
                 title: "Create Account or Log In",
                 icon: "person.crop.circle.badge.plus",
@@ -174,10 +205,12 @@ public struct MainMenuView: View {
         ]
     }
     
+    // MARK: - Member or Owner
     private func memberOrOwnerItems(profile: MyUserProfile) -> [MenuItem] {
+        print("[MainMenuView] memberOrOwnerItems => Building items for profile id: \(profile.id ?? "nil").")
         var result: [MenuItem] = []
         
-        // Everyone sees these:
+        // Common
         result.append(
             MenuItem(
                 title: "LIVE Matchmaking",
@@ -203,7 +236,7 @@ public struct MainMenuView: View {
             )
         )
         
-        // Achievements & Leaderboards for non-guest
+        // Achievements & Leaderboards if not guest
         if !profile.accountTypes.contains(.guest) {
             result.append(
                 MenuItem(
@@ -223,7 +256,7 @@ public struct MainMenuView: View {
             )
         }
         
-        // Membership booleans
+        // Membership
         if profile.hasCommunityMembership {
             result.append(
                 MenuItem(
@@ -275,7 +308,7 @@ public struct MainMenuView: View {
             )
         }
         
-        // Admin checks
+        // Admin
         if profile.isCommunityAdmin {
             result.append(
                 MenuItem(
@@ -327,7 +360,7 @@ public struct MainMenuView: View {
             )
         }
         
-        // Always add Settings
+        // Always Settings
         result.append(
             MenuItem(
                 title: "Settings",
@@ -337,39 +370,51 @@ public struct MainMenuView: View {
             )
         )
         
+        print("[MainMenuView] memberOrOwnerItems => Returning \(result.count) items.")
         return result
     }
     
+    // MARK: - Fetch Profile
     private func fetchUserProfile() -> MyUserProfile? {
+        print("[MainMenuView] fetchUserProfile called.")
         guard let user = authManager.user else {
-            // If guest
             if authManager.isGuest {
+                print("[MainMenuView] fetchUserProfile => Current user is nil but isGuest == true. Returning guest profile.")
                 return MyUserProfile(
                     id: nil,
-                    accountTypes: [.guest],
-                    email: nil,
                     name: "Guest",
-                    bio: "",
-                    birthYear: nil,
                     phone: nil,
+                    phonePublicly: false,
+                    birthYear: nil,
+                    birthYearPublicly: false,
+                    email: nil,
+                    emailPublicly: false,
+                    clanTag: nil,
+                    clanColorHex: nil,
                     profilePictureURL: nil,
                     bannerURL: nil,
-                    clanTag: nil,
+                    followers: 0,
+                    friends: 0,
+                    wins: 0,
+                    losses: 0,
+                    livePlatforms: [],
+                    livePlatformLinks: [],
+                    agencies: [],
+                    creatorNetworks: [],
+                    teams: [],
+                    communities: [],
                     tags: [],
                     socialLinks: [],
                     gamingAccounts: [],
-                    livePlatforms: [],
                     gamingAccountDetails: [],
                     livePlatformDetails: [],
-                    followers: 0,
-                    friends: 0,
+                    accountTypes: [.guest],
+                    bio: "",
                     isSearching: false,
-                    wins: 0,
-                    losses: 0,
-                    roster: [],
+                    roster: nil,
                     establishedDate: nil,
                     subscriptionActive: false,
-                    subscriptionPrice: 0,
+                    subscriptionPrice: 0.0,
                     createdAt: Date(),
                     hasCommunityMembership: false,
                     isCommunityAdmin: false,
@@ -381,39 +426,50 @@ public struct MainMenuView: View {
                     isAgencyAdmin: false,
                     hasCreatorNetworkMembership: false,
                     isCreatorNetworkAdmin: false,
-                    hasRemoveAds: false // <-- add this or track in another field
+                    hasRemoveAds: false
                 )
             }
+            print("[MainMenuView] fetchUserProfile => Current user is nil and not guest. Returning nil.")
             return nil
         }
         
         // Example fallback if user is present
+        print("[MainMenuView] fetchUserProfile => user found: \(user.uid), using example MyUserProfile.")
         let example = MyUserProfile(
             id: user.uid,
-            accountTypes: [.viewer, .creator],
-            email: user.email ?? "",
             name: user.displayName ?? "",
-            bio: "",
-            birthYear: nil,
             phone: nil,
+            phonePublicly: false,
+            birthYear: nil,
+            birthYearPublicly: false,
+            email: user.email ?? "",
+            emailPublicly: false,
+            clanTag: nil,
+            clanColorHex: nil,
             profilePictureURL: nil,
             bannerURL: nil,
-            clanTag: nil,
+            followers: 0,
+            friends: 0,
+            wins: 0,
+            losses: 0,
+            livePlatforms: [],
+            livePlatformLinks: [],
+            agencies: [],
+            creatorNetworks: [],
+            teams: [],
+            communities: [],
             tags: [],
             socialLinks: [],
             gamingAccounts: [],
-            livePlatforms: [],
             gamingAccountDetails: [],
             livePlatformDetails: [],
-            followers: 0,
-            friends: 0,
+            accountTypes: [.viewer, .creator],
+            bio: "",
             isSearching: false,
-            wins: 0,
-            losses: 0,
-            roster: [],
+            roster: nil,
             establishedDate: nil,
             subscriptionActive: false,
-            subscriptionPrice: 0,
+            subscriptionPrice: 0.0,
             createdAt: Date(),
             hasCommunityMembership: true,
             isCommunityAdmin: false,
@@ -425,8 +481,9 @@ public struct MainMenuView: View {
             isAgencyAdmin: false,
             hasCreatorNetworkMembership: false,
             isCreatorNetworkAdmin: false,
-            hasRemoveAds: false // or set to true to hide banner
+            hasRemoveAds: false
         )
+        print("[MainMenuView] fetchUserProfile => example profile created.")
         return example
     }
 }

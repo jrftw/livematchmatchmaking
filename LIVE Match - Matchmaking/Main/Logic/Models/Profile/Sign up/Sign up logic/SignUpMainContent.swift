@@ -2,17 +2,18 @@
 //  SignUpMainContent.swift
 //  LIVE Match - Matchmaking
 //
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  The primary sign-up form that displays all relevant fields based on the chosen category and subtypes,
-//  including profile/banner upload, clan color, toggles for tags, etc.
+//  Created by Kevin Doyle Jr. on 2/1/25.
 //
+// MARK: - SignUpMainContent.swift
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// Displays relevant fields based on chosen category and subtypes.
+// Includes logic for images, clan color, tags, and more.
 
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage
 
-// MARK: - Enums
 public enum MainAccountCategory: String, CaseIterable {
     case solo = "Solo"
     case community = "Community"
@@ -37,8 +38,10 @@ public enum BusinessSubType: String, CaseIterable {
     case scouter = "Scout (Coming Soon)"
 }
 
+// MARK: - SignUpMainContent
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct SignUpMainContent: View {
+    
     // MARK: Bound Base Fields
     @Binding public var firstName: String
     @Binding public var lastName: String
@@ -110,7 +113,7 @@ public struct SignUpMainContent: View {
     
     public let defaultAgencies: [String]
     
-    // MARK: Predefined Hashtag Toggles
+    // MARK: - Predefined Hashtag Toggles
     private let predefinedTags: [String] = [
         "#LIVEMatch", "#BattleCreator", "#Gamer",
         "#Viewer", "#Agency", "#CreatorNetwork", "#Gifter"
@@ -120,7 +123,7 @@ public struct SignUpMainContent: View {
         ScrollView {
             VStack(spacing: 16) {
                 
-                // MARK: Profile & Banner at the top
+                // MARK: Profile & Banner
                 profileBannerSection()
                 
                 // MARK: Clan Color
@@ -129,7 +132,7 @@ public struct SignUpMainContent: View {
                 // MARK: Base Fields
                 baseFieldsSection()
                 
-                // MARK: Category & Subtype UI
+                // MARK: Category & Subtypes
                 if mainAccountCategory == .solo {
                     SoloTogglesSectionView(
                         allSoloTypes: SoloSubType.allCases,
@@ -161,7 +164,7 @@ public struct SignUpMainContent: View {
                     businessSection()
                 }
                 
-                // MARK: Social & Hashtag Toggles
+                // MARK: Social & Hashtag
                 socialLinksSection()
                 hashtagsToggleSection()
                 
@@ -183,11 +186,9 @@ public struct SignUpMainContent: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            // Profile Image
             .sheet(isPresented: $showImagePicker) {
                 ImagePicker(image: $profileImage)
             }
-            // Banner Image
             .sheet(isPresented: $showBannerPicker) {
                 ImagePicker(image: $bannerImage)
             }
@@ -196,16 +197,13 @@ public struct SignUpMainContent: View {
     }
 }
 
-// MARK: - Private UI Sections
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-private extension SignUpMainContent {
+extension SignUpMainContent {
     
     // MARK: Profile & Banner
     func profileBannerSection() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Profile & Banner Images").font(.headline)
-            
-            // Profile
             HStack {
                 if let img = profileImage {
                     Image(uiImage: img)
@@ -223,7 +221,6 @@ private extension SignUpMainContent {
                 }
             }
             
-            // Banner
             HStack {
                 if let banner = bannerImage {
                     Image(uiImage: banner)
@@ -247,7 +244,6 @@ private extension SignUpMainContent {
         VStack(alignment: .leading, spacing: 8) {
             Text("Clan Color (Optional)").font(.headline)
             ColorPicker("Select Clan Color", selection: $clanColor, supportsOpacity: false)
-                .padding(.top, 2)
         }
     }
     
@@ -298,27 +294,24 @@ private extension SignUpMainContent {
         }
     }
     
-    // MARK: Hashtags Toggle Section
+    // MARK: Hashtags
     func hashtagsToggleSection() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Tags (at least one required for Solo)").font(.headline)
-            // Predefined tag toggles
-            ForEach(predefinedTags, id: \.self) { hash in
+            ForEach(predefinedTags, id: \.self) { tag in
                 Toggle(isOn: Binding<Bool>(
-                    get: { selectedTags.contains(hash) },
+                    get: { selectedTags.contains(tag) },
                     set: { val in
                         if val {
-                            selectedTags.insert(hash)
+                            selectedTags.insert(tag)
                         } else {
-                            selectedTags.remove(hash)
+                            selectedTags.remove(tag)
                         }
                     }
                 )) {
-                    Text(hash)
+                    Text(tag)
                 }
             }
-            
-            // If you want to confirm which tags are selected
             if !selectedTags.isEmpty {
                 Text("Selected: \(selectedTags.joined(separator: ", "))")
                     .font(.subheadline)

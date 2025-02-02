@@ -4,11 +4,9 @@
 //
 //  Created by Kevin Doyle Jr. on 1/30/25.
 //
-
-
-// MARK: CreateThreadView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Allows a user to create a new direct or group chat by specifying participants.
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  Allows a user to create a new direct or group chat by searching all users
+//  by username, sorted A-Z. Clicking a user adds them to participants.
 
 import SwiftUI
 import FirebaseAuth
@@ -20,9 +18,10 @@ public struct CreateThreadView: View {
     
     @State private var isGroup = false
     @State private var groupName = ""
-    @State private var participantInput = ""
-    @State private var participants: [String] = []
     
+    @StateObject private var userSearchVM = ThreadUserSearchViewModel()
+    
+    @State private var participants: [String] = []
     @State private var errorMessage = ""
     
     public init() {}
@@ -36,16 +35,35 @@ public struct CreateThreadView: View {
                         TextField("Group Name", text: $groupName)
                     }
                 }
-                Section(header: Text("Participants")) {
-                    TextField("Enter user ID to add", text: $participantInput)
-                    Button("Add Participant") {
-                        let trimmed = participantInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { return }
-                        if !participants.contains(trimmed) {
-                            participants.append(trimmed)
+                
+                Section(header: Text("Add Participants")) {
+                    TextField("Search by username...", text: $userSearchVM.searchText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    
+                    if !userSearchVM.filteredUsers.isEmpty {
+                        List(userSearchVM.filteredUsers, id: \.id) { userProfile in
+                            Button {
+                                if let userID = userProfile.id, !participants.contains(userID) {
+                                    participants.append(userID)
+                                }
+                            } label: {
+                                VStack(alignment: .leading) {
+                                    Text(userProfile.username)
+                                        .font(.headline)
+                                    if userProfile.bio.count > 0 {
+                                        Text(userProfile.bio)
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
                         }
-                        participantInput = ""
+                        .frame(minHeight: 200, maxHeight: 300)
+                    } else {
+                        Text("No users found.")
+                            .foregroundColor(.secondary)
                     }
+                    
                     if !participants.isEmpty {
                         ForEach(participants, id: \.self) { userId in
                             HStack {
@@ -59,10 +77,12 @@ public struct CreateThreadView: View {
                         }
                     }
                 }
+                
                 if !errorMessage.isEmpty {
                     Text(errorMessage)
                         .foregroundColor(.red)
                 }
+                
                 Section {
                     Button("Create Thread") {
                         createThread()
@@ -78,6 +98,9 @@ public struct CreateThreadView: View {
                     }
                 }
             }
+            .onAppear {
+                userSearchVM.fetchAllUsers()
+            }
         }
     }
     
@@ -87,7 +110,6 @@ public struct CreateThreadView: View {
             return
         }
         var finalList = participants
-        // Ensure current user is in the thread
         if !finalList.contains(currentUser.uid) {
             finalList.append(currentUser.uid)
         }

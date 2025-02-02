@@ -2,9 +2,11 @@
 //  SignUpView.swift
 //  LIVE Match - Matchmaking
 //
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Entry point to choose account category, then show the main sign-up content.
+//  Created by Kevin Doyle Jr. on 2/1/25.
 //
+// MARK: - SignUpView.swift
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// Entry point to choose account category (Solo, Community, Business), then open main sign-up.
 
 import SwiftUI
 import FirebaseAuth
@@ -13,7 +15,9 @@ import FirebaseStorage
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct SignUpView: View {
-    @State private var showSignUpMain = false
+    
+    // MARK: - Vars
+    @State var showSignUpMain = false
     
     @State var firstName = ""
     @State var lastName = ""
@@ -74,6 +78,7 @@ public struct SignUpView: View {
     
     public init() {}
     
+    // MARK: - Body
     public var body: some View {
         NavigationView {
             VStack(spacing: 20) {

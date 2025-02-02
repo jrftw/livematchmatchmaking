@@ -1,6 +1,13 @@
-// MARK: File 14: ChatView.swift
-// MARK: iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Simple community chat screen
+//
+//  ChatView.swift
+//  LIVE Match - Matchmaking
+//
+//  Created by Kevin Doyle Jr. on 1/30/25.
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  Community chat screen that now stores and displays the user's actual username
+//  instead of just their user ID.
+//
 
 import SwiftUI
 import FirebaseAuth
@@ -28,7 +35,7 @@ final class ChatViewModel: ObservableObject {
                     let data = document.data()
                     let docID = document.documentID
                     let text = data["text"] as? String ?? ""
-                    let sender = data["sender"] as? String ?? ""
+                    let sender = data["sender"] as? String ?? "Unknown"
                     let ts = data["timestamp"] as? Timestamp
                     let timestamp = ts?.dateValue() ?? Date()
                     
@@ -47,31 +54,25 @@ final class ChatViewModel: ObservableObject {
     func sendMessage(text: String) {
         guard !text.isEmpty else { return }
         
-        if Auth.auth().currentUser == nil {
-            if AuthManager.shared.isGuest {
+        if let user = Auth.auth().currentUser {
+            let uid = user.uid
+            db.collection("users").document(uid).getDocument { snap, _ in
+                let userData = snap?.data() ?? [:]
+                let username = userData["username"] as? String ?? uid
                 let docData: [String: Any] = [
                     "text": text,
-                    "sender": "Guest",
+                    "sender": username,
                     "timestamp": Date()
                 ]
-                db.collection("messages").addDocument(data: docData) { error in
-                    if let err = error {
-                        print("Guest message error: \(err)")
-                    }
-                }
+                self.db.collection("messages").addDocument(data: docData)
             }
-            return
-        }
-        guard let user = Auth.auth().currentUser else { return }
-        let docData: [String: Any] = [
-            "text": text,
-            "sender": user.uid,
-            "timestamp": Date()
-        ]
-        db.collection("messages").addDocument(data: docData) { error in
-            if let err = error {
-                print("Error sending message: \(err)")
-            }
+        } else if AuthManager.shared.isGuest {
+            let docData: [String: Any] = [
+                "text": text,
+                "sender": "Guest",
+                "timestamp": Date()
+            ]
+            db.collection("messages").addDocument(data: docData)
         }
     }
 }
@@ -86,7 +87,7 @@ struct ChatView: View {
             ScrollView {
                 LazyVStack {
                     ForEach(vm.messages) { msg in
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text(msg.sender)
                                 .font(.caption)
                             Text(msg.text)

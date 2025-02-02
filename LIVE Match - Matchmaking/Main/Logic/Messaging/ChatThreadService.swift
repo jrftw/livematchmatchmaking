@@ -4,11 +4,8 @@
 //
 //  Created by Kevin Doyle Jr. on 1/30/25.
 //
-
-
-// MARK: ChatThreadService.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Handles creation and updates to chat threads.
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  Handles creation and updates to chat threads.
 
 import Foundation
 import Firebase
@@ -21,14 +18,12 @@ public final class ChatThreadService {
     
     private init() {}
     
-    // Creates a new chat thread (group or direct).
-    // participants: array of user IDs
-    // isGroup: whether it's a group
-    // name: group name if isGroup == true
-    public func createThread(participants: [String],
-                             isGroup: Bool,
-                             groupName: String? = nil,
-                             completion: @escaping (String?) -> Void) {
+    public func createThread(
+        participants: [String],
+        isGroup: Bool,
+        groupName: String? = nil,
+        completion: @escaping (String?) -> Void
+    ) {
         guard !participants.isEmpty else {
             completion(nil)
             return
@@ -56,7 +51,6 @@ public final class ChatThreadService {
         }
     }
     
-    // Updates a thread's lastUpdated field when a new message arrives
     public func updateThreadLastUpdated(threadID: String) {
         db.collection("chatThreads").document(threadID).updateData([
             "lastUpdated": Date()

@@ -1,15 +1,29 @@
-// MARK: SignUpLogic.swift
+//
+//  SignUpLogic.swift
+//  LIVE Match - Matchmaking
+//
+//  Created by Kevin Doyle Jr. on 2/1/25.
+//
+// MARK: - SignUpLogic.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Contains the sign-up logic extension only.
+// Contains sign-up logic for finalizing account creation, bridging to Firestore, etc.
+// Also includes a small extension to convert a SwiftUI Color to a hex string
+// via UIColor on iOS/visionOS. Removes references to `.wrappedValue`
+// and resolves "Initializer for conditional binding" issues.
 
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage
 
+#if os(iOS) || os(visionOS)
+import UIKit
+#endif
+
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public extension SignUpMainContent {
-    // MARK: - Should Show Gaming Platforms
+    
+    // MARK: - Should Show Gaming
     func shouldShowGamingPlatforms() -> Bool {
         (mainAccountCategory == .solo && selectedSoloTypes.contains(.gamer))
         || (mainAccountCategory == .business && selectedBusinessTypes.contains(.team))
@@ -52,45 +66,60 @@ public extension SignUpMainContent {
         }
     }
     
-    // MARK: - Create Profile in Firestore
+    // MARK: - Create Profile
     private func createProfile(profilePicURL: String?) {
         guard let userID = Auth.auth().currentUser?.uid else { return }
         let chosenAccountTypes = determineAccountTypes()
-        let totalPrice = chosenAccountTypes.reduce(0.0) { sum, type in
-            switch type {
+        
+        // Example "subscription price" logic
+        let totalPrice = chosenAccountTypes.reduce(0.0) { sum, nextType in
+            switch nextType {
             case .team: return sum + 1
             case .agency: return sum + 5
             case .scouter: return sum + 10
             default: return sum
             }
         }
+        
         let mergedName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespacesAndNewlines)
         let df = DateFormatter()
         df.dateFormat = "yyyy"
         let birthYearString = df.string(from: birthday)
         
+        // Use the bridging function clanColorHex(clanColor) rather than clanColor.wrappedValue
+        let colorHex = clanColorHex(clanColor)
+        
         let newProfile = UserProfile(
             id: userID,
             username: username.isEmpty ? mergedName : username,
-            accountTypes: chosenAccountTypes,
-            email: email,
             bio: bio,
-            birthYear: birthYearString,
             phone: phoneNumber.isEmpty ? nil : phoneNumber,
+            phonePublicly: confirmPhonePublicly,
+            birthYear: birthYearString,
+            birthYearPublicly: false,
+            email: email,
+            emailPublicly: false,
+            clanTag: clanTag.isEmpty ? nil : clanTag,
+            clanColorHex: colorHex,
             profilePictureURL: profilePicURL,
             bannerURL: nil,
-            clanTag: clanTag.isEmpty ? nil : clanTag,
+            followers: 0,
+            friends: 0,
+            wins: 0,
+            losses: 0,
+            livePlatforms: [],
+            livePlatformLinks: [],
+            agencies: [],
+            creatorNetworks: [],
+            teams: [],
+            communities: [],
             tags: Array(selectedTags),
             socialLinks: socialLinks,
             gamingAccounts: [],
-            livePlatforms: [],
             gamingAccountDetails: gamingAccounts,
             livePlatformDetails: [],
-            followers: 0,
-            friends: 0,
+            accountTypes: chosenAccountTypes,
             isSearching: false,
-            wins: 0,
-            losses: 0,
             roster: [],
             establishedDate: "",
             subscriptionActive: (totalPrice > 0),
@@ -109,7 +138,8 @@ public extension SignUpMainContent {
         )
         
         do {
-            try FirebaseManager.shared.db.collection("users")
+            try FirebaseManager.shared.db
+                .collection("users")
                 .document(userID)
                 .setData(from: newProfile)
         } catch {
@@ -120,9 +150,10 @@ public extension SignUpMainContent {
     // MARK: - Determine Account Types
     func determineAccountTypes() -> [AccountType] {
         var types: [AccountType] = []
+        
         switch mainAccountCategory {
         case .solo:
-            if selectedSoloTypes.contains(.viewer) { types.append(.guest) }
+            if selectedSoloTypes.contains(.viewer) { types.append(.viewer) }
             if selectedSoloTypes.contains(.creator) { types.append(.creator) }
             if selectedSoloTypes.contains(.gamer) { types.append(.gamer) }
             if types.isEmpty { types.append(.guest) }
@@ -137,6 +168,7 @@ public extension SignUpMainContent {
             if selectedBusinessTypes.contains(.scouter) { types.append(.scouter) }
             if types.isEmpty { types.append(.guest) }
         }
+        
         return types
     }
     
@@ -168,3 +200,34 @@ public extension SignUpMainContent {
         showingError = true
     }
 }
+
+// MARK: - Bridging: Color -> Hex
+#if os(iOS) || os(visionOS)
+import UIKit
+
+@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+public extension SignUpMainContent {
+    func clanColorHex(_ color: Color) -> String {
+        // Convert SwiftUI Color -> UIColor -> hex,
+        // returning a default if anything fails
+        let uiColor = UIColor(color)
+        return uiColor.toHex() ?? "#0000FF"
+    }
+}
+
+fileprivate extension UIColor {
+    func toHex() -> String? {
+        var rF: CGFloat = 0
+        var gF: CGFloat = 0
+        var bF: CGFloat = 0
+        var aF: CGFloat = 0
+        guard getRed(&rF, green: &gF, blue: &bF, alpha: &aF) else {
+            return nil
+        }
+        let r = Int(rF * 255)
+        let g = Int(gF * 255)
+        let b = Int(bF * 255)
+        return String(format: "#%02X%02X%02X", r, g, b)
+    }
+}
+#endif
