@@ -2,11 +2,14 @@
 //  CreateThreadView.swift
 //  LIVE Match - Matchmaking
 //
-//  Created by Kevin Doyle Jr. on 1/30/25.
-//
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
 //  Allows a user to create a new direct or group chat by searching all users
 //  by username, sorted A-Z. Clicking a user adds them to participants.
+//
+//  NOTE: This version uses force-unwrap (!) on optional fields to satisfy
+//  the requirement "Force-unwrap using '!' to abort execution if the
+//  optional value contains 'nil'." Understand that if `id` or `bio` are
+//  actually nil, the app will crash.
 
 import SwiftUI
 import FirebaseAuth
@@ -40,18 +43,27 @@ public struct CreateThreadView: View {
                     TextField("Search by username...", text: $userSearchVM.searchText)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                     
+                    // Force-unwrap 'id' and 'bio' in the List
+                    // If userProfile.id or userProfile.bio might be nil, this will crash at runtime.
                     if !userSearchVM.filteredUsers.isEmpty {
-                        List(userSearchVM.filteredUsers, id: \.id) { userProfile in
+                        List(userSearchVM.filteredUsers, id: \.id!) { userProfile in
                             Button {
-                                if let userID = userProfile.id, !participants.contains(userID) {
+                                // Force-unwrap userProfile.id
+                                let userID = userProfile.id!
+                                
+                                if !participants.contains(userID) {
                                     participants.append(userID)
                                 }
                             } label: {
                                 VStack(alignment: .leading) {
+                                    // Force-unwrap 'bio' if you want to check .count
+                                    // Alternatively, check for nil if you prefer safe usage
+                                    // e.g. "if userProfile.bio != nil && !userProfile.bio!.isEmpty"
                                     Text(userProfile.username)
                                         .font(.headline)
-                                    if userProfile.bio.count > 0 {
-                                        Text(userProfile.bio)
+                                    
+                                    if userProfile.bio != nil && !userProfile.bio!.isEmpty {
+                                        Text(userProfile.bio!)
                                             .font(.subheadline)
                                             .foregroundColor(.secondary)
                                     }

@@ -4,6 +4,7 @@
 
 import SwiftUI
 import Firebase
+import FirebaseAppCheck // Make sure to import this
 #if canImport(UIKit)
 import GoogleMobileAds
 #endif
@@ -15,9 +16,18 @@ struct TournamentAppApp: App {
     init() {
         print("[TournamentAppApp] init started.")
         
+        // 1. Configure Firebase
         FirebaseApp.configure()
         print("[TournamentAppApp] FirebaseApp.configure() called.")
         
+        // 2. Enable Debug provider for App Check (Simulator usage)
+        #if canImport(UIKit)
+        let providerFactory = AppCheckDebugProviderFactory()
+        AppCheck.setAppCheckProviderFactory(providerFactory)
+        print("[TournamentAppApp] AppCheckDebugProviderFactory set for simulator testing.")
+        #endif
+        
+        // 3. Configure AdMob if on iOS
         #if canImport(UIKit)
         AdManager.shared.configureAdMob()
         print("[TournamentAppApp] AdManager.shared.configureAdMob() called.")

@@ -1,21 +1,17 @@
-// MARK: BottomBarView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// A bottom tab for menu, feed, messages, profile. If guest, restrict feed/messages/profile.
+//
+//  BottomBarView.swift
+//  LIVE Match - Matchmaking
+//
+//  A bottom bar with 4 buttons. If not fully logged in, show an alert for feed/messages/profile.
+//
 
 import SwiftUI
 import FirebaseAuth
 
-@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-public enum MainScreen {
-    case menu
-    case feed
-    case messages
-    case profile
-}
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct BottomBarView: View {
-    // MARK: - Observed Objects
+    // MARK: - ObservedObject
     @ObservedObject private var authManager = AuthManager.shared
     
     // MARK: - Binding
@@ -26,32 +22,23 @@ public struct BottomBarView: View {
     
     // MARK: - Init
     public init(selectedScreen: Binding<MainScreen>) {
-        print("[BottomBarView] init called.")
         self._selectedScreen = selectedScreen
-        print("[BottomBarView] init completed. Initial selectedScreen: \(selectedScreen.wrappedValue)")
     }
     
     // MARK: - Body
     public var body: some View {
-        let _ = print("[BottomBarView] body invoked. Checking auth state.")
-        
         let isLoggedIn = (authManager.user != nil)
         let isGuest = authManager.isGuest
         let fullyLoggedIn = (isLoggedIn && !isGuest)
         
-        let _ = print("[BottomBarView] isLoggedIn: \(isLoggedIn), isGuest: \(isGuest), fullyLoggedIn: \(fullyLoggedIn)")
-        
-        return ZStack {
-            let _ = print("[BottomBarView] Building background rectangle and shadow.")
+        ZStack {
             Rectangle()
                 .fill(Color(UIColor.systemBackground).opacity(0.95))
-                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: -2)
+                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: -2)
             
             HStack(spacing: 40) {
-                
-                // MARK: - Menu Button
+                // Menu
                 Button {
-                    print("[BottomBarView] Menu button tapped. Setting selectedScreen = .menu.")
                     selectedScreen = .menu
                 } label: {
                     VStack(spacing: 2) {
@@ -60,14 +47,11 @@ public struct BottomBarView: View {
                     }
                 }
                 
-                // MARK: - Feed Button
+                // Feed
                 Button {
-                    print("[BottomBarView] Feed button tapped.")
                     if fullyLoggedIn {
-                        print("[BottomBarView] User is fully logged in. Navigating to feed.")
                         selectedScreen = .feed
                     } else {
-                        print("[BottomBarView] User not fully logged in. Triggering guest alert.")
                         showingGuestAlert = true
                     }
                 } label: {
@@ -77,14 +61,11 @@ public struct BottomBarView: View {
                     }
                 }
                 
-                // MARK: - Messages Button
+                // Messages
                 Button {
-                    print("[BottomBarView] Messages button tapped.")
                     if fullyLoggedIn {
-                        print("[BottomBarView] User is fully logged in. Navigating to messages.")
                         selectedScreen = .messages
                     } else {
-                        print("[BottomBarView] User not fully logged in. Triggering guest alert.")
                         showingGuestAlert = true
                     }
                 } label: {
@@ -94,14 +75,11 @@ public struct BottomBarView: View {
                     }
                 }
                 
-                // MARK: - Profile Button
+                // Profile
                 Button {
-                    print("[BottomBarView] Profile button tapped.")
                     if fullyLoggedIn {
-                        print("[BottomBarView] User is fully logged in. Navigating to profile.")
                         selectedScreen = .profile
                     } else {
-                        print("[BottomBarView] User not fully logged in. Triggering guest alert.")
                         showingGuestAlert = true
                     }
                 } label: {
@@ -115,13 +93,10 @@ public struct BottomBarView: View {
         }
         .frame(height: 60)
         .alert(isPresented: $showingGuestAlert) {
-            print("[BottomBarView] Guest alert is presented.")
-            return Alert(
+            Alert(
                 title: Text("Account Required"),
                 message: Text("Log In or Create an account to view this content."),
-                dismissButton: .default(Text("OK"), action: {
-                    print("[BottomBarView] Guest alert dismissed.")
-                })
+                dismissButton: .default(Text("OK"))
             )
         }
     }

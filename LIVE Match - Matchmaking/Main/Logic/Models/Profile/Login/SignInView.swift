@@ -1,12 +1,6 @@
-//
-//  SignInView.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 2/1/25.
-//
 // MARK: - SignInView.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Modern sign-in screen supporting Email, Phone, or Username.
+// Allows switching to UniversalSignUpView with a selectedScreen binding.
 
 import SwiftUI
 import FirebaseAuth
@@ -14,8 +8,11 @@ import FirebaseFirestore
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct SignInView: View {
-    // MARK: - Environment
+    // MARK: - Environment & Bindings
     @Environment(\.colorScheme) private var colorScheme
+    
+    // Pass in a binding for the MainScreen so we can jump to .profile if desired
+    @Binding var selectedScreen: MainScreen
     
     // MARK: - State
     @State private var credential = ""
@@ -25,7 +22,8 @@ public struct SignInView: View {
     @State private var errorMessage = ""
     
     // MARK: - Init
-    public init() {
+    public init(selectedScreen: Binding<MainScreen>) {
+        self._selectedScreen = selectedScreen
         let _ = print("[SignInView] init called.")
     }
     
@@ -52,14 +50,19 @@ public struct SignInView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            // Present UniversalSignUpView in a sheet.
+            // Pass in selectedScreen so user can be sent to .profile upon creation.
             .sheet(isPresented: $showSignUp) {
                 let _ = print("[SignInView] Presenting SignUpView sheet.")
-                SignUpView()
+                UniversalSignUpView(selectedScreen: $selectedScreen)
             }
         }
     }
-    
-    // MARK: - Background Gradient
+}
+
+// MARK: - Subviews
+@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+extension SignInView {
     private var backgroundGradient: LinearGradient {
         let _ = print("[SignInView] backgroundGradient computed => colorScheme: \(colorScheme)")
         
@@ -78,15 +81,11 @@ public struct SignInView: View {
         }
     }
     
-    // MARK: - Top Section
     private func topSection() -> some View {
         let _ = print("[SignInView] topSection invoked.")
-        
-        return Text("Log In or Sign Up")
-            .font(.largeTitle)
+        return Text("Log In or Sign Up").font(.largeTitle)
     }
     
-    // MARK: - Credential Fields
     private func credentialFields() -> some View {
         let _ = print("[SignInView] credentialFields invoked.")
         
@@ -101,7 +100,6 @@ public struct SignInView: View {
         }
     }
     
-    // MARK: - Action Buttons
     private func actionButtons() -> some View {
         let _ = print("[SignInView] actionButtons invoked.")
         
@@ -121,8 +119,11 @@ public struct SignInView: View {
             .padding(.vertical, 5)
         }
     }
-    
-    // MARK: - Sign In Action
+}
+
+// MARK: - Sign In Logic
+@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+extension SignInView {
     private func signInAction() {
         let _ = print("[SignInView] signInAction called => credential: \(credential)")
         
@@ -145,15 +146,18 @@ public struct SignInView: View {
                     showingError = true
                 case .success:
                     let _ = print("[SignInView] signIn succeeded.")
+                    // Optionally go to profile on success
+                    self.selectedScreen = .profile
                 }
             }
         }
     }
     
-    // MARK: - Resolve Credential
+    /// Interprets the credential as email, username, or phone, returning an email if found
     private func resolveCredential(_ credential: String, completion: @escaping (String?) -> Void) {
         let _ = print("[SignInView] resolveCredential => \(credential)")
         
+        // If '@' is present, assume it's an email
         if credential.contains("@") {
             let _ = print("[SignInView] '@' detected => using credential as email.")
             completion(credential)

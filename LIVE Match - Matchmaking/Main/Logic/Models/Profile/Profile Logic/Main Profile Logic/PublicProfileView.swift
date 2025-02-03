@@ -1,23 +1,13 @@
-//
-//  PublicProfileView.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 2/1/25.
-//
 // MARK: - PublicProfileView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Displays any user's public profile. If it's the current user,
-// shows an Edit button that opens EditProfileView in a sheet.
+// iOS 15.6+, macOS 11.5, visionOS 2.0+
 
 import SwiftUI
-import FirebaseAuth
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct PublicProfileView: View {
-    
-    // MARK: - Properties
-    public let profile: UserProfile
+    public let profile: MyUserProfile
     public let isCurrentUser: Bool
+    
     @State private var userPosts: [String] = [
         "Public post #1",
         "Public post #2",
@@ -25,20 +15,17 @@ public struct PublicProfileView: View {
     ]
     @State private var showingEditSheet = false
     
-    // MARK: - Init
-    public init(profile: UserProfile, isCurrentUser: Bool = false) {
+    public init(profile: MyUserProfile, isCurrentUser: Bool = false) {
         self.profile = profile
         self.isCurrentUser = isCurrentUser
     }
     
-    // MARK: - Body
     public var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 bannerSection()
                 VStack(spacing: 16) {
                     avatarAndBasicInfo()
-                    statsRow()
                     actionButtonsRow()
                     aboutSection()
                     tagsSection()
@@ -62,7 +49,6 @@ public struct PublicProfileView: View {
         }
     }
     
-    // MARK: - Banner
     private func bannerSection() -> some View {
         ZStack {
             if let bannerURL = profile.bannerURL,
@@ -70,10 +56,14 @@ public struct PublicProfileView: View {
                let url = URL(string: bannerURL) {
                 AsyncImage(url: url) { phase in
                     switch phase {
-                    case .empty: Color.gray.opacity(0.3)
-                    case .success(let img): img.resizable().scaledToFill()
-                    case .failure: Color.gray.opacity(0.3)
-                    @unknown default: Color.gray.opacity(0.3)
+                    case .empty:
+                        Color.gray.opacity(0.3)
+                    case .success(let img):
+                        img.resizable().scaledToFill()
+                    case .failure:
+                        Color.gray.opacity(0.3)
+                    @unknown default:
+                        Color.gray.opacity(0.3)
                     }
                 }
                 .frame(height: 180)
@@ -84,7 +74,6 @@ public struct PublicProfileView: View {
         }
     }
     
-    // MARK: - Avatar & Info
     private func avatarAndBasicInfo() -> some View {
         VStack(spacing: 12) {
             ZStack {
@@ -131,26 +120,6 @@ public struct PublicProfileView: View {
         .padding(.top, 8)
     }
     
-    // MARK: - Stats
-    private func statsRow() -> some View {
-        HStack(spacing: 24) {
-            VStack {
-                Text("Followers").font(.caption)
-                Text("\(profile.followers)").font(.headline)
-            }
-            VStack {
-                Text("Friends").font(.caption)
-                Text("\(profile.friends)").font(.headline)
-            }
-            VStack {
-                Text("Wins/Losses").font(.caption)
-                Text("\(profile.wins)/\(profile.losses)").font(.headline)
-            }
-        }
-        .padding(.top, 8)
-    }
-    
-    // MARK: - Action Buttons
     private func actionButtonsRow() -> some View {
         Group {
             if isCurrentUser {
@@ -188,35 +157,25 @@ public struct PublicProfileView: View {
         .padding(.vertical, 8)
     }
     
-    // MARK: - About
     private func aboutSection() -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            if !profile.bio.isEmpty {
-                Text(profile.bio).font(.body)
+            if let b = profile.bio, !b.isEmpty {
+                Text(b).font(.body)
             }
-            if let phone = profile.phone, !phone.isEmpty {
-                Text("Phone: \(phone)").foregroundColor(.secondary)
+            if let ph = profile.phoneNumber, !ph.isEmpty {
+                Text("Phone: \(ph)").foregroundColor(.secondary)
             }
-            if let by = profile.birthYear, !by.isEmpty {
-                Text("Birth Year: \(by)").foregroundColor(.secondary)
+            if let bday = profile.birthday, !bday.isEmpty {
+                Text("Birthday: \(bday)").foregroundColor(.secondary)
             }
             if let mail = profile.email, !mail.isEmpty {
                 Text("Email: \(mail)").foregroundColor(.secondary)
-            }
-            if !profile.livePlatforms.isEmpty {
-                Text("Live Platforms: \(profile.livePlatforms.joined(separator: ", "))")
-                    .foregroundColor(.secondary)
-            }
-            if !profile.gamingAccounts.isEmpty {
-                Text("Gaming Accounts: \(profile.gamingAccounts.joined(separator: ", "))")
-                    .foregroundColor(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 8)
     }
     
-    // MARK: - Tags
     @ViewBuilder
     private func tagsSection() -> some View {
         if !profile.tags.isEmpty {
@@ -232,11 +191,16 @@ public struct PublicProfileView: View {
         }
     }
     
-    // MARK: - Feed
+    @ViewBuilder
     private func feedSection() -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(isCurrentUser ? "My Feed" : "\(profile.username)'s Posts")
-                .font(.headline)
+        Text(isCurrentUser ? "My Feed" : "\(profile.username)'s Posts")
+            .font(.headline)
+            .padding(.top, 16)
+        
+        if userPosts.isEmpty {
+            Text("No posts yet.")
+                .foregroundColor(.secondary)
+        } else {
             ForEach(userPosts, id: \.self) { post in
                 VStack(alignment: .leading, spacing: 6) {
                     Text(post)
@@ -245,6 +209,5 @@ public struct PublicProfileView: View {
                 }
             }
         }
-        .padding(.top, 16)
     }
 }

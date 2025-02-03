@@ -1,34 +1,23 @@
-//
-//  ImagePicker.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 2/1/25.
-//
-// MARK: - ImagePicker.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// -----------------------------------------------------------------------------
+// MARK: ImagePicker.swift
 // Simple image picker for iOS/visionOS. macOS fallback not implemented here.
-
+// -----------------------------------------------------------------------------
 #if os(iOS) || os(visionOS)
 import SwiftUI
 import UIKit
 
-@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+@available(iOS 15.6, visionOS 2.0, *)
 public struct ImagePicker: UIViewControllerRepresentable {
-    
-    // MARK: - Binding
     @Binding var image: UIImage?
     
-    // MARK: - Init
     public init(image: Binding<UIImage?>) {
         self._image = image
     }
     
-    // MARK: - Coordinator
     public func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
     
-    // MARK: - UIViewControllerRepresentable
     public func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.allowsEditing = true
@@ -39,7 +28,6 @@ public struct ImagePicker: UIViewControllerRepresentable {
     
     public func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
     
-    // MARK: - Coordinator Class
     public class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
         let parent: ImagePicker
         
