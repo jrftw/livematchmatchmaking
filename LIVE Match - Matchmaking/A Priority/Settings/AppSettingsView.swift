@@ -12,8 +12,8 @@ public struct AppSettingsView: View {
     
     @State private var showChangelog = false
     @StateObject private var locationManager = LocationRegionDetector()
+    @StateObject private var notificationManager = NotificationManager()
     
-    // Must accept selectedScreen so we can pass it to ForceLogoutSection
     @Binding var selectedScreen: MainScreen
     
     public init(selectedScreen: Binding<MainScreen>) {
@@ -28,14 +28,12 @@ public struct AppSettingsView: View {
             Form {
                 addOnSection()
                 featuresSection()
+                notificationsSection()
                 appearanceSection()
                 timezoneSection()
                 versionSection()
                 supportSection()
-                
-                // ForceLogoutSection now requires the binding
                 ForceLogoutSection(selectedScreen: $selectedScreen)
-                
                 footerSection()
             }
             .navigationTitle("Settings")
@@ -55,6 +53,8 @@ public struct AppSettingsView: View {
         .navigationViewStyle(StackNavigationViewStyle())
     }
     
+    // MARK: - Sections
+    
     private func addOnSection() -> some View {
         Section("Add On") {
             NavigationLink("Manage Add-Ons") {
@@ -68,6 +68,15 @@ public struct AppSettingsView: View {
             Toggle("Enable Auto-Updates", isOn: .constant(true))
             Button("Force Version Check") {
                 AppVersion.validateAndForceUpdate()
+            }
+        }
+    }
+    
+    private func notificationsSection() -> some View {
+        Section("Notifications") {
+            Toggle("Enable Notifications", isOn: $notificationManager.isNotificationsEnabled)
+            Button("Request Permission") {
+                notificationManager.requestNotificationPermission()
             }
         }
     }
@@ -129,12 +138,13 @@ public struct AppSettingsView: View {
         .textCase(nil)
     }
     
+    // MARK: - Helpers
+    
     private func applyColorScheme(_ scheme: String) {
         #if !os(macOS)
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
             return
         }
-        
         switch scheme {
         case "light":
             scene.windows.forEach { $0.overrideUserInterfaceStyle = .light }

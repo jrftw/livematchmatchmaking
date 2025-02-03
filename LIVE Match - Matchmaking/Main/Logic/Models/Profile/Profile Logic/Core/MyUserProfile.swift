@@ -1,10 +1,9 @@
-// MARK: - MyUserProfile.swift
+// MARK: MyUserProfile.swift
 
 import SwiftUI
 import FirebaseFirestore
 
 public struct MyUserProfile: Codable, Identifiable {
-    // Removed @DocumentID, so we can set id ourselves in code
     public var id: String?
     
     public var firstName: String
@@ -32,12 +31,13 @@ public struct MyUserProfile: Codable, Identifiable {
     public var bannerURL: String?
     
     public var createdAt: Date
-    
-    // MARK: - New Fields
     public var followersCount: Int
     public var followingCount: Int
     public var wins: Int
     public var losses: Int
+    
+    // New field for location
+    public var location: String?
     
     public init(
         id: String? = nil,
@@ -62,7 +62,8 @@ public struct MyUserProfile: Codable, Identifiable {
         followersCount: Int = 0,
         followingCount: Int = 0,
         wins: Int = 0,
-        losses: Int = 0
+        losses: Int = 0,
+        location: String? = nil
     ) {
         self.id = id
         self.firstName = firstName
@@ -87,5 +88,6 @@ public struct MyUserProfile: Codable, Identifiable {
         self.followingCount = followingCount
         self.wins = wins
         self.losses = losses
+        self.location = location
     }
 }

@@ -1,6 +1,11 @@
-// File: AdvancedBracketCreationView.swift
 // MARK: AdvancedBracketCreationView.swift
-// iOS 15.6+, macOS 11.5, visionOS 2.0+
+
+//
+//  AdvancedBracketCreationView.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//
 
 import SwiftUI
 import FirebaseFirestore
@@ -94,7 +99,6 @@ public struct AdvancedBracketCreationView: View {
         }
     }
     
-    // MARK: - Load Bracket Creator Name
     private func fetchBracketCreatorName() {
         guard let uid = Auth.auth().currentUser?.uid else {
             bracketCreator = "Guest or Unknown"
@@ -123,7 +127,6 @@ public struct AdvancedBracketCreationView: View {
         }
     }
     
-    // MARK: - Add Manual Entry
     private func addManualEntry() {
         let newEntry = BracketEntry(
             username: "",
@@ -145,7 +148,6 @@ public struct AdvancedBracketCreationView: View {
         entries.append(newEntry)
     }
     
-    // MARK: - Create Bracket
     private func createBracket() {
         let bracketDoc: [String: Any] = [
             "title": title,
@@ -170,7 +172,6 @@ public struct AdvancedBracketCreationView: View {
         }
     }
     
-    // MARK: - Share Bracket
     private func shareBracket() {
         print("Sharing bracket with external apps… (placeholder)")
     }

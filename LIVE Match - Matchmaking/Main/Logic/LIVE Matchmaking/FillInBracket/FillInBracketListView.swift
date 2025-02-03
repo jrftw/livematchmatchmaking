@@ -1,18 +1,15 @@
+// MARK: FillInBracketListView.swift
+
 //
 //  FillInBracketListView.swift
 //  LIVE Match - Matchmaking
 //
-//  Created by Kevin Doyle Jr. on 1/31/25.
-//
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Lists existing fill-in bracket docs from Firestore for a given platform
-//  and opens them in FillInBracketCreationView.
 //
 
 import SwiftUI
 import FirebaseFirestore
 
-// MARK: - FillInBracketListView
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 struct FillInBracketListView: View {
     let platform: LivePlatformOption
@@ -50,7 +47,6 @@ struct FillInBracketListView: View {
     }
 }
 
-// MARK: - FillInBracketListViewModel
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 final class FillInBracketListViewModel: ObservableObject {
     @Published var brackets: [FillInBracketDoc] = []

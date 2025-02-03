@@ -1,4 +1,5 @@
-// MARK: - UserProfile.swift
+// MARK: UserProfile.swift
+
 import SwiftUI
 import FirebaseFirestore
 
@@ -30,11 +31,13 @@ public struct UserProfile: Codable, Identifiable {
     public var bannerURL: String?
     
     public var createdAt: Date
-    
     public var followersCount: Int
     public var followingCount: Int
     public var wins: Int
     public var losses: Int
+    
+    // If you want location in this user profile, add it here:
+    public var location: String?
     
     public init(
         id: String? = nil,
@@ -59,7 +62,8 @@ public struct UserProfile: Codable, Identifiable {
         followersCount: Int = 0,
         followingCount: Int = 0,
         wins: Int = 0,
-        losses: Int = 0
+        losses: Int = 0,
+        location: String? = nil
     ) {
         self.id = id
         self.firstName = firstName
@@ -84,5 +88,6 @@ public struct UserProfile: Codable, Identifiable {
         self.followingCount = followingCount
         self.wins = wins
         self.losses = losses
+        self.location = location
     }
 }

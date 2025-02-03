@@ -1,59 +1,40 @@
+// =============================
+// MARK: CreatorVsCreatorView.swift
+// =============================
+
 //
 //  CreatorVsCreatorView.swift
 //  LIVE Match - Matchmaking
 //
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
 //  “Tinder style” approach for scheduling Creator vs. Creator matches.
-//  Allows user to pick match time (Now or up to 1 month), match format,
-//  displays searching creators with user pictures, bios, & location.
-//  Provides Yes/No/Maybe, keeps a local decision history.
+//  Uses data models from MatchModels.swift
+//  Loads real creator data from Firebase, then offers swipe decisions.
 //
 
 import SwiftUI
+import FirebaseFirestore
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct CreatorVsCreatorView: View {
     
     public let platform: LivePlatformOption
     
-    // Time & Format
     @State private var selectedTime: MatchTimeOption = .now
     @State private var selectedType: MatchTypeOption = .oneAndDone
     
-    // For “Later” scheduling
     @State private var selectedLaterOption: String? = nil
     private let possibleLaterOptions = [
         "Within 1 day", "Within 2 days", "Within 1 week",
         "Within 2 weeks", "Within 3 weeks", "Within 1 month"
     ]
     
-    // Deck of potential matches
-    @State private var potentialMatches: [CreatorMatchCandidate] = [
-        .init(
-            id: "1",
-            username: "CreatorAlpha",
-            bio: "Pro at dance battles",
-            location: "New York, USA",
-            profilePictureURL: "https://example.com/alpha.jpg"
-        ),
-        .init(
-            id: "2",
-            username: "CreatorBeta",
-            bio: "Loves singing duels",
-            location: "Los Angeles, USA",
-            profilePictureURL: "https://example.com/beta.jpg"
-        ),
-        .init(
-            id: "3",
-            username: "CreatorGamma",
-            bio: "Comedic skits champion",
-            location: "London, UK",
-            profilePictureURL: "https://example.com/gamma.jpg"
-        )
-    ]
-    
-    // Decision history
+    @State private var potentialMatches: [CreatorMatchCandidate] = []
     @State private var decisionHistory: [String: SwipeDecision] = [:]
+    
+    // Loading / Error
+    @State private var isLoading: Bool = false
+    @State private var errorMessage: String? = nil
     
     public init(platform: LivePlatformOption) {
         self.platform = platform
@@ -61,8 +42,6 @@ public struct CreatorVsCreatorView: View {
     
     public var body: some View {
         VStack(spacing: 16) {
-            
-            // Time & Type pickers
             timeAndTypeSection()
             
             if selectedTime == .later {
@@ -72,7 +51,13 @@ public struct CreatorVsCreatorView: View {
             Text("Creators Searching on \(platform.name)")
                 .font(.headline)
             
-            if let currentCandidate = potentialMatches.first {
+            if isLoading {
+                ProgressView("Loading matches...")
+            } else if let error = errorMessage {
+                Text(error)
+                    .foregroundColor(.red)
+                    .padding()
+            } else if let currentCandidate = potentialMatches.first {
                 candidateCard(candidate: currentCandidate)
             } else {
                 Text("No more creators to match with.")
@@ -80,7 +65,6 @@ public struct CreatorVsCreatorView: View {
                     .padding()
             }
             
-            // History
             NavigationLink("View Decision History") {
                 historyListView()
             }
@@ -90,14 +74,15 @@ public struct CreatorVsCreatorView: View {
         }
         .navigationTitle("Creator vs Creator")
         .padding()
+        .task {
+            await loadPotentialMatchesFromFirebase()
+        }
     }
 }
 
-// MARK: - Private Helpers
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 private extension CreatorVsCreatorView {
     
-    // Time & Format
     func timeAndTypeSection() -> some View {
         VStack(spacing: 12) {
             Picker("Time Option", selection: $selectedTime) {
@@ -117,18 +102,13 @@ private extension CreatorVsCreatorView {
         .padding(.horizontal)
     }
     
-    // For "Later" scheduling
     func laterSchedulingSection() -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Schedule (up to 1 month):").font(.subheadline)
             ForEach(possibleLaterOptions, id: \.self) { opt in
                 HStack {
                     Button {
-                        if selectedLaterOption == opt {
-                            selectedLaterOption = nil
-                        } else {
-                            selectedLaterOption = opt
-                        }
+                        selectedLaterOption = (selectedLaterOption == opt ? nil : opt)
                     } label: {
                         HStack {
                             Image(systemName: selectedLaterOption == opt
@@ -145,10 +125,8 @@ private extension CreatorVsCreatorView {
         .padding(.horizontal)
     }
     
-    // Card for current top candidate
     func candidateCard(candidate: CreatorMatchCandidate) -> some View {
         VStack(spacing: 12) {
-            // Picture
             if let url = URL(string: candidate.profilePictureURL) {
                 AsyncImage(url: url) { image in
                     image.resizable().scaledToFill()
@@ -170,7 +148,6 @@ private extension CreatorVsCreatorView {
             Text("Location: \(candidate.location)")
                 .font(.subheadline)
             
-            // Buttons: No, Maybe, Yes
             HStack(spacing: 40) {
                 Button {
                     swipe(.no, for: candidate)
@@ -182,7 +159,6 @@ private extension CreatorVsCreatorView {
                         .background(Color.red)
                         .cornerRadius(8)
                 }
-                
                 Button {
                     swipe(.maybe, for: candidate)
                 } label: {
@@ -193,7 +169,6 @@ private extension CreatorVsCreatorView {
                         .background(Color.orange)
                         .cornerRadius(8)
                 }
-                
                 Button {
                     swipe(.yes, for: candidate)
                 } label: {
@@ -213,13 +188,11 @@ private extension CreatorVsCreatorView {
         .frame(maxWidth: 350)
     }
     
-    // Record decision & remove candidate
     func swipe(_ decision: SwipeDecision, for candidate: CreatorMatchCandidate) {
         decisionHistory[candidate.id] = decision
         potentialMatches.removeAll { $0.id == candidate.id }
     }
     
-    // Past decisions
     func historyListView() -> some View {
         List {
             ForEach(decisionHistory.sorted(by: { $0.key < $1.key }), id: \.key) { (candidateID, dec) in
@@ -227,12 +200,50 @@ private extension CreatorVsCreatorView {
                     Text("Candidate ID: \(candidateID)")
                     Spacer()
                     Text(dec.rawValue.capitalized)
-                        .foregroundColor(dec == .yes ? .green
-                                         : dec == .no ? .red
-                                         : .orange)
+                        .foregroundColor(
+                            dec == .yes ? .green :
+                            dec == .no ? .red : .orange
+                        )
                 }
             }
         }
         .navigationTitle("Decision History")
+    }
+    
+    func loadPotentialMatchesFromFirebase() async {
+        isLoading = true
+        errorMessage = nil
+        
+        let db = FirebaseManager.shared.db
+        do {
+            let querySnap = try await db.collection("creators")
+                .whereField("platform", isEqualTo: platform.name)
+                .getDocuments()
+            
+            var loaded: [CreatorMatchCandidate] = []
+            for doc in querySnap.documents {
+                let data = doc.data()
+                guard
+                    let username = data["username"] as? String,
+                    let bio = data["bio"] as? String,
+                    let location = data["location"] as? String,
+                    let profilePictureURL = data["profilePictureURL"] as? String
+                else { continue }
+                
+                let candidate = CreatorMatchCandidate(
+                    id: doc.documentID,
+                    username: username,
+                    bio: bio,
+                    location: location,
+                    profilePictureURL: profilePictureURL
+                )
+                loaded.append(candidate)
+            }
+            potentialMatches = loaded
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        
+        isLoading = false
     }
 }

@@ -1,56 +1,105 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Info.plist
+ Fully configured for:
+   • Firebase
+   • AdMob
+   • SKAdNetwork (for ad tracking)
+   • Background modes (remote-notification, processing, location, fetch)
+   • BGTaskSchedulerPermittedIdentifiers
+   • Location usage descriptions
+-->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<true/>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-6815311336585204~7995771052</string>
-	<key>SKAdNetworkItems</key>
-	<array>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>cstr6su5fj.skadnetwork</string>
-		</dict>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>4fzdc2evr5.skadnetwork</string>
-		</dict>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>4pfyvq9l8r.skadnetwork</string>
-		</dict>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>2fnua5tdw4.skadnetwork</string>
-		</dict>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>ydx93a7ass.skadnetwork</string>
-		</dict>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>778lra9vel.skadnetwork</string>
-		</dict>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>cp8zw746q7.skadnetwork</string>
-		</dict>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>v9wttpbfk9.skadnetwork</string>
-		</dict>
-		<dict>
-			<key>SKAdNetworkIdentifier</key>
-			<string>n38lu8286q.skadnetwork</string>
-		</dict>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-		<string>processing</string>
-		<string>location</string>
-		<string>fetch</string>
-	</array>
+    <!-- MARK: Firebase Settings -->
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <true/>
+    
+    <!-- MARK: AdMob Settings -->
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-6815311336585204~7995771052</string>
+    
+    <!-- MARK: SKAdNetwork Items -->
+    <key>SKAdNetworkItems</key>
+    <array>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>cstr6su5fj.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>4fzdc2evr5.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>4pfyvq9l8r.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>2fnua5tdw4.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>ydx93a7ass.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>778lra9vel.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>cp8zw746q7.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>v9wttpbfk9.skadnetwork</string>
+        </dict>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>n38lu8286q.skadnetwork</string>
+        </dict>
+    </array>
+    
+    <!-- MARK: Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <!-- App supports push notifications in background -->
+        <string>remote-notification</string>
+        <!-- Required for BGTaskScheduler background tasks -->
+        <string>processing</string>
+        <!-- Allows location-based updates in background -->
+        <string>location</string>
+        <!-- Allows background fetch for content refresh -->
+        <string>fetch</string>
+    </array>
+    
+    <!-- MARK: BGTask Scheduler Identifiers
+         These must match the identifiers used in your code for:
+         BGTaskScheduler.shared.register(forTaskWithIdentifier: ...)
+         and BGTaskScheduler.shared.submit(...)
+    -->
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <!-- Replace these example identifiers with your real ones -->
+        <string>com.yourcompany.yourapp.refresh</string>
+        <string>com.yourcompany.yourapp.processing</string>
+    </array>
+    
+    <!-- MARK: Location Usage Descriptions (iOS 13+ / iOS 14+ etc.)
+         Adjust text as needed for your app’s explanation to users.
+    -->
+    
+    <!-- Always + When In Use (if applicable) -->
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app needs your location to provide location-based alerts and services, even in the background.</string>
+    
+    <!-- When In Use -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app uses your location to provide relevant features only while the app is in use.</string>
+    
+    <!-- If you also require Always usage in iOS 12 or earlier: -->
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>This app needs your location at all times for certain continuous features.</string>
 </dict>
 </plist>

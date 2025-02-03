@@ -1,29 +1,27 @@
+// MARK: MatchModels.swift
+
 //
 //  MatchModels.swift
 //  LIVE Match - Matchmaking
 //
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Data models & enums for match scheduling (time, type) and “swipe” decisions.
 //
 
 import SwiftUI
 
-// MARK: MatchTimeOption
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public enum MatchTimeOption: String, CaseIterable {
     case now = "Now"
     case later = "Later"
 }
 
-// MARK: MatchTypeOption
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public enum MatchTypeOption: String, CaseIterable {
     case oneAndDone = "One & Done"
-    case best2of3   = "Best 2/3"
-    case best3of5   = "Best 3/5"
+    case bestOfThree = "Best of 3"
+    case marathon = "Marathon"
 }
 
-// MARK: SwipeDecision
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public enum SwipeDecision: String, Codable {
     case yes
@@ -31,9 +29,8 @@ public enum SwipeDecision: String, Codable {
     case maybe
 }
 
-// MARK: CreatorMatchCandidate
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-public struct CreatorMatchCandidate: Identifiable {
+public struct CreatorMatchCandidate: Identifiable, Codable {
     public let id: String
     public let username: String
     public let bio: String

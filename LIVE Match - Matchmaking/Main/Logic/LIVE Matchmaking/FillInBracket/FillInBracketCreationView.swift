@@ -1,21 +1,18 @@
+// MARK: FillInBracketCreationView.swift
+
 //
 //  FillInBracketCreationView.swift
 //  LIVE Match - Matchmaking
 //
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  A main view for building a fill-in bracket, supporting CSV import/export, plus fully implemented Excel/Sheets templates.
-//  Uses FillInBracketSlot data model and FillInBracketSlotEditView for slot editing.
-//  Includes a "Download Templates" flow for CSV, Excel, and Google Sheets.
 //
 
 import SwiftUI
 import UniformTypeIdentifiers
 import Foundation
 
-// MARK: - FillInBracketCreationView
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct FillInBracketCreationView: View {
-    // MARK: Properties
     public let title: String
     public let platform: LivePlatformOption
     public let existingDoc: FillInBracketDoc?
@@ -35,7 +32,6 @@ public struct FillInBracketCreationView: View {
     
     @Environment(\.openURL) private var openURL
     
-    // MARK: Init
     public init(
         title: String,
         platform: LivePlatformOption,
@@ -46,7 +42,6 @@ public struct FillInBracketCreationView: View {
         self.existingDoc = existingDoc
     }
     
-    // MARK: Body
     public var body: some View {
         Form {
             Section(header: Text("Bracket Info")) {
@@ -165,7 +160,6 @@ public struct FillInBracketCreationView: View {
         }
     }
     
-    // MARK: - Build CSV
     private func handleExportCSV() {
         let csvText = buildCSV(from: slots)
         let filename = "\(bracketName.isEmpty ? "Bracket" : bracketName)_Export.csv"
@@ -211,7 +205,6 @@ public struct FillInBracketCreationView: View {
         return lines.joined(separator: "\n")
     }
     
-    // MARK: - Import
     private func handleImportResult(_ result: Result<[URL], Error>) {
         switch result {
         case .failure(let err):
@@ -280,8 +273,6 @@ public struct FillInBracketCreationView: View {
     }
     
     private func importExcelOrSheets(_ fileURL: URL) {
-        // Basic read, ignoring actual XLSX or Sheets parsing.
-        // This can be extended with real XLSX or Sheets logic.
         do {
             let _ = try Data(contentsOf: fileURL)
             print("Excel/Sheets import succeeded (basic data read).")
@@ -290,7 +281,6 @@ public struct FillInBracketCreationView: View {
         }
     }
     
-    // MARK: - Templates
     private func downloadCSVTemplate() {
         let lines = [
             "Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Creator2,Net/Agency2,Cat2,Diamond2,Status,Notes,Link",
@@ -330,12 +320,10 @@ public struct FillInBracketCreationView: View {
         openURL(link)
     }
     
-    // MARK: - Save
     private func saveBracket() {
         print("Saving bracket '\(bracketName)' with \(slots.count) slots.")
     }
     
-    // MARK: - Helpers
     private func formatDateTime(_ date: Date) -> String {
         let df = DateFormatter()
         df.dateStyle = .medium

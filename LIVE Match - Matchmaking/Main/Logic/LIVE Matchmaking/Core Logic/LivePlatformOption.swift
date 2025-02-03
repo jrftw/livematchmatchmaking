@@ -1,9 +1,10 @@
+// MARK: LivePlatformOption.swift
+
 //
 //  LivePlatformOption.swift
 //  LIVE Match - Matchmaking
 //
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  A single source of truth for platforms (TikTok, YouTube, etc.).
 //
 
 import SwiftUI

@@ -1,9 +1,11 @@
+// MARK: StreamingView.swift
+
 //
 //  StreamingView.swift
 //  LIVE Match - Matchmaking
 //
 //  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Main “LIVE” matchmaking entry. Lists available platforms, links to “Creator vs Creator” or bracket flows.
+//  Main “LIVE” matchmaking entry.
 //
 
 import SwiftUI
@@ -11,7 +13,6 @@ import SwiftUI
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct StreamingView: View {
     
-    // Example platforms
     private let platforms: [LivePlatformOption] = [
         .init(name: "TikTok"),
         .init(name: "Favorited"),

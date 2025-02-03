@@ -1,8 +1,11 @@
-// MARK: - EditProfileView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// MARK: EditProfileView.swift
+
 //
-// Presents a form to edit profile info, including toggles for phone/email public status,
-// clan color, tags, and a direct link to “Availability & TimeZone” and “LM Studio” & “Business Studio” sections.
+//  EditProfileView.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//
 
 import SwiftUI
 import FirebaseAuth
@@ -42,6 +45,16 @@ public struct EditProfileView: View {
     @State private var showingTeamStudio = false
     @State private var showingAgencyCreatorNetworkStudio = false
     
+    // Country picker (Location) in alphabetical order
+    private let countries = [
+        "Canada",
+        "China",
+        "England",
+        "Other",
+        "United Kingdom",
+        "United States"
+    ]
+    
     public init(profile: MyUserProfile) {
         self._profile = State(initialValue: profile)
     }
@@ -49,56 +62,42 @@ public struct EditProfileView: View {
     public var body: some View {
         NavigationView {
             Form {
-                // MARK: Profile / Banner
                 profileBannerSection()
-                
-                // MARK: Basic Info
                 basicInfoSection()
                 
-                // MARK: Bio
+                Section("Location") {
+                    Picker("Select Country", selection: bindingForOptional(\.location)) {
+                        ForEach(countries, id: \.self) { c in
+                            Text(c).tag(c as String?)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                
                 bioSection()
-                
-                // MARK: Birthday
                 birthdaySection()
-                
-                // MARK: Email
                 emailSection()
-                
-                // MARK: Phone
                 phoneSection()
                 
-                // MARK: Availability & Timezone
                 Section("Availability & TimeZone") {
                     NavigationLink("Configure Availability") {
                         CreatorAvailabilityView()
                     }
                 }
                 
-                // MARK: Password
                 passwordSection()
-                
-                // MARK: Clan
                 clanSection()
-                
-                // MARK: Tags
                 tagsSection()
-                
-                // MARK: Social Links
                 socialLinksSection()
                 
-                // MARK: W/L Stats
                 Section("Wins / Losses") {
                     Stepper("Wins: \(profile.wins)", value: bindingForInt(\.wins), in: 0...9999)
                     Stepper("Losses: \(profile.losses)", value: bindingForInt(\.losses), in: 0...9999)
                 }
                 
-                // MARK: LM Studio
                 lmStudioSection()
-                
-                // MARK: Business Studio
                 businessStudioSection()
                 
-                // MARK: Save Changes
                 Section {
                     Button("Save Changes") {
                         saveProfile()
@@ -123,8 +122,6 @@ public struct EditProfileView: View {
             .sheet(isPresented: $showingPasswordChange) {
                 passwordChangeSheet()
             }
-            
-            // LM Studio sheets
             .sheet(isPresented: $showingViewerStudio) {
                 ViewerStudioView()
             }
@@ -137,8 +134,6 @@ public struct EditProfileView: View {
             .sheet(isPresented: $showingCommunityStudio) {
                 CommunityStudioView()
             }
-            
-            // Business Studio sheets
             .sheet(isPresented: $showingTeamStudio) {
                 TeamStudioView()
             }
@@ -152,14 +147,12 @@ public struct EditProfileView: View {
     }
 }
 
-// MARK: - Subviews
+// MARK: - Private Subviews
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-extension EditProfileView {
-    
-    private func profileBannerSection() -> some View {
+private extension EditProfileView {
+    func profileBannerSection() -> some View {
         Section("Profile & Banner") {
             HStack {
-                // Profile Picture
                 if let pImg = newProfileImage {
                     Image(uiImage: pImg)
                         .resizable()
@@ -174,9 +167,7 @@ extension EditProfileView {
                         case .empty:
                             Circle().fill(Color.gray.opacity(0.3))
                         case .success(let loaded):
-                            loaded
-                                .resizable()
-                                .scaledToFill()
+                            loaded.resizable().scaledToFill()
                         case .failure:
                             Circle().fill(Color.gray.opacity(0.3))
                         @unknown default:
@@ -197,7 +188,6 @@ extension EditProfileView {
             }
             
             HStack {
-                // Banner Image
                 if let bImg = newBannerImage {
                     Image(uiImage: bImg)
                         .resizable()
@@ -212,9 +202,7 @@ extension EditProfileView {
                         case .empty:
                             Color.gray.opacity(0.3)
                         case .success(let loaded):
-                            loaded
-                                .resizable()
-                                .scaledToFill()
+                            loaded.resizable().scaledToFill()
                         case .failure:
                             Color.gray.opacity(0.3)
                         @unknown default:
@@ -237,7 +225,7 @@ extension EditProfileView {
         }
     }
     
-    private func basicInfoSection() -> some View {
+    func basicInfoSection() -> some View {
         Section("Basic Info") {
             TextField("First Name", text: bindingForNonOptional(\.firstName))
             Toggle("Show First Name Publicly", isOn: $showFirstNamePublicly)
@@ -258,34 +246,34 @@ extension EditProfileView {
         }
     }
     
-    private func bioSection() -> some View {
+    func bioSection() -> some View {
         Section("Bio") {
             TextField("Bio", text: bindingForOptional(\.bio))
         }
     }
     
-    private func birthdaySection() -> some View {
+    func birthdaySection() -> some View {
         Section("Birthday") {
             TextField("Birthday (YYYY-MM-DD)", text: bindingForOptional(\.birthday))
             Toggle("Show Birthday Publicly", isOn: $profile.birthdayPublicly)
         }
     }
     
-    private func emailSection() -> some View {
+    func emailSection() -> some View {
         Section("Email") {
             TextField("Email", text: bindingForOptional(\.email))
             Toggle("Show Email Publicly", isOn: $profile.emailPublicly)
         }
     }
     
-    private func phoneSection() -> some View {
+    func phoneSection() -> some View {
         Section("Phone") {
             TextField("Phone Number", text: bindingForOptional(\.phoneNumber))
             Toggle("Show Phone Publicly", isOn: $profile.phonePublicly)
         }
     }
     
-    private func passwordSection() -> some View {
+    func passwordSection() -> some View {
         Section("Change Password") {
             Button("Change Password") {
                 showingPasswordChange = true
@@ -294,14 +282,14 @@ extension EditProfileView {
         }
     }
     
-    private func clanSection() -> some View {
+    func clanSection() -> some View {
         Section("Clan") {
             TextField("Clan Tag", text: bindingForOptional(\.clanTag))
             ColorPicker("Clan Color", selection: clanColorBinding, supportsOpacity: false)
         }
     }
     
-    private func tagsSection() -> some View {
+    func tagsSection() -> some View {
         Section("Tags") {
             TextField("Tags (comma separated)", text: Binding<String>(
                 get: { profile.tags.joined(separator: ", ") },
@@ -313,7 +301,7 @@ extension EditProfileView {
         }
     }
     
-    private func socialLinksSection() -> some View {
+    func socialLinksSection() -> some View {
         Section("Social Network Links") {
             ForEach(Array(profile.socialLinks.keys), id: \.self) { key in
                 HStack {
@@ -327,7 +315,7 @@ extension EditProfileView {
         }
     }
     
-    private func lmStudioSection() -> some View {
+    func lmStudioSection() -> some View {
         Section("LM Studio") {
             Button("Viewer Section") { showingViewerStudio = true }
             Button("Creator Section") { showingCreatorStudio = true }
@@ -336,7 +324,7 @@ extension EditProfileView {
         }
     }
     
-    private func businessStudioSection() -> some View {
+    func businessStudioSection() -> some View {
         Section("Business Studio") {
             Button("Team Section") { showingTeamStudio = true }
             Button("Agency / Creator Network Section") { showingAgencyCreatorNetworkStudio = true }
@@ -348,9 +336,9 @@ extension EditProfileView {
 
 // MARK: - Save & Password
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-extension EditProfileView {
+private extension EditProfileView {
     
-    private func passwordChangeSheet() -> some View {
+    func passwordChangeSheet() -> some View {
         NavigationView {
             Form {
                 Section(header: Text("Enter New Password")) {
@@ -371,7 +359,7 @@ extension EditProfileView {
         }
     }
     
-    private func saveProfile() {
+    func saveProfile() {
         savingInProgress = true
         
         if let newPic = newProfileImage {
@@ -396,7 +384,7 @@ extension EditProfileView {
         }
     }
     
-    private func finalizeSave() {
+    func finalizeSave() {
         guard let uid = Auth.auth().currentUser?.uid else {
             savingInProgress = false
             dismiss()
@@ -415,7 +403,7 @@ extension EditProfileView {
         }
     }
     
-    private func uploadImage(_ image: UIImage, path: String, completion: @escaping (String?) -> Void) {
+    func uploadImage(_ image: UIImage, path: String, completion: @escaping (String?) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else {
             completion(nil)
             return
@@ -441,23 +429,23 @@ extension EditProfileView {
 
 // MARK: - Helpers & Bindings
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-extension EditProfileView {
+private extension EditProfileView {
     
-    private func bindingForNonOptional(_ keyPath: WritableKeyPath<MyUserProfile, String>) -> Binding<String> {
+    func bindingForNonOptional(_ keyPath: WritableKeyPath<MyUserProfile, String>) -> Binding<String> {
         Binding<String>(
             get: { profile[keyPath: keyPath] },
             set: { profile[keyPath: keyPath] = $0 }
         )
     }
     
-    private func bindingForOptional(_ keyPath: WritableKeyPath<MyUserProfile, String?>) -> Binding<String> {
+    func bindingForOptional(_ keyPath: WritableKeyPath<MyUserProfile, String?>) -> Binding<String> {
         Binding<String>(
             get: { profile[keyPath: keyPath] ?? "" },
             set: { profile[keyPath: keyPath] = $0 }
         )
     }
     
-    private func bindingForInt(_ keyPath: WritableKeyPath<MyUserProfile, Int>) -> Binding<Int> {
+    func bindingForInt(_ keyPath: WritableKeyPath<MyUserProfile, Int>) -> Binding<Int> {
         Binding<Int>(
             get: { profile[keyPath: keyPath] },
             set: { profile[keyPath: keyPath] = $0 }
@@ -465,7 +453,7 @@ extension EditProfileView {
     }
     
     #if os(iOS) || os(visionOS)
-    private var clanColorBinding: Binding<Color> {
+    var clanColorBinding: Binding<Color> {
         Binding<Color>(
             get: {
                 guard let hex = profile.clanColorHex else { return .blue }
@@ -477,7 +465,7 @@ extension EditProfileView {
         )
     }
     
-    private func uiColorFromHex(_ hex: String) -> UIColor? {
+    func uiColorFromHex(_ hex: String) -> UIColor? {
         var h = hex
         if h.hasPrefix("#") { h.removeFirst() }
         if h.count == 3 {
@@ -501,7 +489,7 @@ extension EditProfileView {
         )
     }
     
-    private func hexFromColor(_ color: Color) -> String {
+    func hexFromColor(_ color: Color) -> String {
         let ui = UIColor(color)
         var rF: CGFloat = 0, gF: CGFloat = 0, bF: CGFloat = 0, aF: CGFloat = 0
         guard ui.getRed(&rF, green: &gF, blue: &bF, alpha: &aF) else { return "#0000FF" }
@@ -513,7 +501,7 @@ extension EditProfileView {
         return String(format: "#%02X%02X%02X", r, g, b)
     }
     #else
-    private var clanColorBinding: Binding<Color> {
+    var clanColorBinding: Binding<Color> {
         .constant(.blue)
     }
     #endif
