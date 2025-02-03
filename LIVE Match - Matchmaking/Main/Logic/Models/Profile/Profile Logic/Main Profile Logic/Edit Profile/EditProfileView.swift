@@ -1,9 +1,9 @@
+// MARK: - EditProfileView.swift
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
 //
-//  EditProfileView.swift
-//  LIVE Match - Matchmaking
-//
-//  No references to 'hex:' or '.toHex()'. Uses inline bridging for clan color.
-//
+// Presents a form to edit profile info, including toggles for phone/email public status,
+// clan color, tags, and a direct link to “Availability & TimeZone” and “LM Studio” & “Business Studio” sections.
+
 import SwiftUI
 import FirebaseAuth
 import FirebaseStorage
@@ -25,6 +25,23 @@ public struct EditProfileView: View {
     @State private var showingProfilePicker = false
     @State private var showingBannerPicker = false
     
+    @State private var showFirstNamePublicly = false
+    @State private var showLastNamePublicly = false
+    
+    @State private var showingPasswordChange = false
+    @State private var newPassword = ""
+    @State private var confirmNewPassword = ""
+    
+    // LM Studio sections
+    @State private var showingViewerStudio = false
+    @State private var showingCreatorStudio = false
+    @State private var showingGamerStudio = false
+    @State private var showingCommunityStudio = false
+    
+    // Business Studio sections
+    @State private var showingTeamStudio = false
+    @State private var showingAgencyCreatorNetworkStudio = false
+    
     public init(profile: MyUserProfile) {
         self._profile = State(initialValue: profile)
     }
@@ -32,11 +49,56 @@ public struct EditProfileView: View {
     public var body: some View {
         NavigationView {
             Form {
+                // MARK: Profile / Banner
                 profileBannerSection()
+                
+                // MARK: Basic Info
                 basicInfoSection()
+                
+                // MARK: Bio
+                bioSection()
+                
+                // MARK: Birthday
+                birthdaySection()
+                
+                // MARK: Email
+                emailSection()
+                
+                // MARK: Phone
+                phoneSection()
+                
+                // MARK: Availability & Timezone
+                Section("Availability & TimeZone") {
+                    NavigationLink("Configure Availability") {
+                        CreatorAvailabilityView()
+                    }
+                }
+                
+                // MARK: Password
+                passwordSection()
+                
+                // MARK: Clan
                 clanSection()
+                
+                // MARK: Tags
                 tagsSection()
                 
+                // MARK: Social Links
+                socialLinksSection()
+                
+                // MARK: W/L Stats
+                Section("Wins / Losses") {
+                    Stepper("Wins: \(profile.wins)", value: bindingForInt(\.wins), in: 0...9999)
+                    Stepper("Losses: \(profile.losses)", value: bindingForInt(\.losses), in: 0...9999)
+                }
+                
+                // MARK: LM Studio
+                lmStudioSection()
+                
+                // MARK: Business Studio
+                businessStudioSection()
+                
+                // MARK: Save Changes
                 Section {
                     Button("Save Changes") {
                         saveProfile()
@@ -58,6 +120,31 @@ public struct EditProfileView: View {
                 ImagePicker(image: $newBannerImage)
                 #endif
             }
+            .sheet(isPresented: $showingPasswordChange) {
+                passwordChangeSheet()
+            }
+            
+            // LM Studio sheets
+            .sheet(isPresented: $showingViewerStudio) {
+                ViewerStudioView()
+            }
+            .sheet(isPresented: $showingCreatorStudio) {
+                CreatorStudioView()
+            }
+            .sheet(isPresented: $showingGamerStudio) {
+                GamerStudioView()
+            }
+            .sheet(isPresented: $showingCommunityStudio) {
+                CommunityStudioView()
+            }
+            
+            // Business Studio sheets
+            .sheet(isPresented: $showingTeamStudio) {
+                TeamStudioView()
+            }
+            .sheet(isPresented: $showingAgencyCreatorNetworkStudio) {
+                AgencyCreatorNetworkStudioView()
+            }
         }
         #if os(iOS) || os(visionOS)
         .navigationViewStyle(StackNavigationViewStyle())
@@ -68,11 +155,13 @@ public struct EditProfileView: View {
 // MARK: - Subviews
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 extension EditProfileView {
+    
     private func profileBannerSection() -> some View {
         Section("Profile & Banner") {
             HStack {
-                if let pImage = newProfileImage {
-                    Image(uiImage: pImage)
+                // Profile Picture
+                if let pImg = newProfileImage {
+                    Image(uiImage: pImg)
                         .resizable()
                         .scaledToFill()
                         .frame(width: 70, height: 70)
@@ -85,7 +174,9 @@ extension EditProfileView {
                         case .empty:
                             Circle().fill(Color.gray.opacity(0.3))
                         case .success(let loaded):
-                            loaded.resizable().scaledToFill()
+                            loaded
+                                .resizable()
+                                .scaledToFill()
                         case .failure:
                             Circle().fill(Color.gray.opacity(0.3))
                         @unknown default:
@@ -98,6 +189,7 @@ extension EditProfileView {
                     Circle().fill(Color.gray.opacity(0.3))
                         .frame(width: 70, height: 70)
                 }
+                
                 Spacer()
                 Button("Change Photo") {
                     showingProfilePicker = true
@@ -105,8 +197,9 @@ extension EditProfileView {
             }
             
             HStack {
-                if let bImage = newBannerImage {
-                    Image(uiImage: bImage)
+                // Banner Image
+                if let bImg = newBannerImage {
+                    Image(uiImage: bImg)
                         .resizable()
                         .scaledToFill()
                         .frame(height: 60)
@@ -119,7 +212,9 @@ extension EditProfileView {
                         case .empty:
                             Color.gray.opacity(0.3)
                         case .success(let loaded):
-                            loaded.resizable().scaledToFill()
+                            loaded
+                                .resizable()
+                                .scaledToFill()
                         case .failure:
                             Color.gray.opacity(0.3)
                         @unknown default:
@@ -133,6 +228,7 @@ extension EditProfileView {
                         .frame(height: 60)
                         .cornerRadius(8)
                 }
+                
                 Spacer()
                 Button("Change Banner") {
                     showingBannerPicker = true
@@ -143,24 +239,64 @@ extension EditProfileView {
     
     private func basicInfoSection() -> some View {
         Section("Basic Info") {
-            TextField("Username", text: $profile.username)
-            TextField("Display Name", text: $profile.displayName)
+            TextField("First Name", text: bindingForNonOptional(\.firstName))
+            Toggle("Show First Name Publicly", isOn: $showFirstNamePublicly)
             
-            TextField("Bio", text: bindingFor(\.bio))
-            TextField("Phone Number", text: bindingFor(\.phoneNumber))
-            Toggle("Show Phone Publicly", isOn: $profile.phonePublicly)
+            TextField("Last Name", text: bindingForNonOptional(\.lastName))
+            Toggle("Show Last Name Publicly", isOn: $showLastNamePublicly)
             
-            TextField("Birthday (YYYY-MM-DD)", text: bindingFor(\.birthday))
+            TextField("Display Name", text: bindingForNonOptional(\.displayName))
+            
+            VStack(alignment: .leading, spacing: 4) {
+                TextField("@ Username", text: bindingForNonOptional(\.username))
+                Text("Can only change once every 30 days.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+            
+            Button("Request Verification") {}
+        }
+    }
+    
+    private func bioSection() -> some View {
+        Section("Bio") {
+            TextField("Bio", text: bindingForOptional(\.bio))
+        }
+    }
+    
+    private func birthdaySection() -> some View {
+        Section("Birthday") {
+            TextField("Birthday (YYYY-MM-DD)", text: bindingForOptional(\.birthday))
             Toggle("Show Birthday Publicly", isOn: $profile.birthdayPublicly)
-            
-            TextField("Email", text: bindingFor(\.email))
+        }
+    }
+    
+    private func emailSection() -> some View {
+        Section("Email") {
+            TextField("Email", text: bindingForOptional(\.email))
             Toggle("Show Email Publicly", isOn: $profile.emailPublicly)
+        }
+    }
+    
+    private func phoneSection() -> some View {
+        Section("Phone") {
+            TextField("Phone Number", text: bindingForOptional(\.phoneNumber))
+            Toggle("Show Phone Publicly", isOn: $profile.phonePublicly)
+        }
+    }
+    
+    private func passwordSection() -> some View {
+        Section("Change Password") {
+            Button("Change Password") {
+                showingPasswordChange = true
+            }
+            .disabled(savingInProgress)
         }
     }
     
     private func clanSection() -> some View {
         Section("Clan") {
-            TextField("Clan Tag", text: bindingFor(\.clanTag))
+            TextField("Clan Tag", text: bindingForOptional(\.clanTag))
             ColorPicker("Clan Color", selection: clanColorBinding, supportsOpacity: false)
         }
     }
@@ -168,9 +304,7 @@ extension EditProfileView {
     private func tagsSection() -> some View {
         Section("Tags") {
             TextField("Tags (comma separated)", text: Binding<String>(
-                get: {
-                    profile.tags.joined(separator: ", ")
-                },
+                get: { profile.tags.joined(separator: ", ") },
                 set: {
                     let arr = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
                     profile.tags = arr.filter { !$0.isEmpty }
@@ -178,11 +312,65 @@ extension EditProfileView {
             ))
         }
     }
+    
+    private func socialLinksSection() -> some View {
+        Section("Social Network Links") {
+            ForEach(Array(profile.socialLinks.keys), id: \.self) { key in
+                HStack {
+                    Text(key)
+                    Spacer()
+                    Text(profile.socialLinks[key] ?? "")
+                        .foregroundColor(.secondary)
+                }
+            }
+            Button("Add Link") {}
+        }
+    }
+    
+    private func lmStudioSection() -> some View {
+        Section("LM Studio") {
+            Button("Viewer Section") { showingViewerStudio = true }
+            Button("Creator Section") { showingCreatorStudio = true }
+            Button("Gamer Section") { showingGamerStudio = true }
+            Button("Community Section") { showingCommunityStudio = true }
+        }
+    }
+    
+    private func businessStudioSection() -> some View {
+        Section("Business Studio") {
+            Button("Team Section") { showingTeamStudio = true }
+            Button("Agency / Creator Network Section") { showingAgencyCreatorNetworkStudio = true }
+            Button("Scouter Section (Coming Soon)") {}
+            .disabled(true)
+        }
+    }
 }
 
-// MARK: - Save Logic
+// MARK: - Save & Password
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 extension EditProfileView {
+    
+    private func passwordChangeSheet() -> some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Enter New Password")) {
+                    SecureField("New Password", text: $newPassword)
+                    SecureField("Confirm New Password", text: $confirmNewPassword)
+                }
+                Section {
+                    Button("Update Password") {
+                        // Implement actual password change logic
+                        showingPasswordChange = false
+                    }
+                }
+            }
+            .navigationTitle("Change Password")
+            .navigationBarItems(trailing: Button("Done") {
+                showingPasswordChange = false
+            })
+        }
+    }
+    
     private func saveProfile() {
         savingInProgress = true
         
@@ -214,7 +402,7 @@ extension EditProfileView {
             dismiss()
             return
         }
-        let ref = FirebaseManager.shared.db.collection("users").document(uid)
+        let ref = Firestore.firestore().collection("users").document(uid)
         
         do {
             try ref.setData(from: profile, merge: true) { _ in
@@ -236,12 +424,14 @@ extension EditProfileView {
             completion(nil)
             return
         }
-        let storageRef = Storage.storage().reference().child("\(path)/\(uid)_\(UUID().uuidString).jpg")
-        storageRef.putData(data, metadata: nil) { _, error in
-            if let _ = error {
+        
+        let ref = Storage.storage().reference().child("\(path)/\(uid)_\(UUID().uuidString).jpg")
+        ref.putData(data, metadata: nil) { _, error in
+            if let error = error {
+                print("Error uploading image: \(error.localizedDescription)")
                 completion(nil)
             } else {
-                storageRef.downloadURL { url, _ in
+                ref.downloadURL { url, _ in
                     completion(url?.absoluteString)
                 }
             }
@@ -249,12 +439,27 @@ extension EditProfileView {
     }
 }
 
-// MARK: - Helpers
+// MARK: - Helpers & Bindings
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 extension EditProfileView {
-    private func bindingFor(_ keyPath: WritableKeyPath<MyUserProfile, String?>) -> Binding<String> {
+    
+    private func bindingForNonOptional(_ keyPath: WritableKeyPath<MyUserProfile, String>) -> Binding<String> {
+        Binding<String>(
+            get: { profile[keyPath: keyPath] },
+            set: { profile[keyPath: keyPath] = $0 }
+        )
+    }
+    
+    private func bindingForOptional(_ keyPath: WritableKeyPath<MyUserProfile, String?>) -> Binding<String> {
         Binding<String>(
             get: { profile[keyPath: keyPath] ?? "" },
+            set: { profile[keyPath: keyPath] = $0 }
+        )
+    }
+    
+    private func bindingForInt(_ keyPath: WritableKeyPath<MyUserProfile, Int>) -> Binding<Int> {
+        Binding<Int>(
+            get: { profile[keyPath: keyPath] },
             set: { profile[keyPath: keyPath] = $0 }
         )
     }
@@ -287,10 +492,11 @@ extension EditProfileView {
         let r = (num & 0xFF0000) >> 16
         let g = (num & 0x00FF00) >> 8
         let b = (num & 0x0000FF)
+        
         return UIColor(
-            red: CGFloat(r)/255.0,
-            green: CGFloat(g)/255.0,
-            blue: CGFloat(b)/255.0,
+            red: CGFloat(r) / 255.0,
+            green: CGFloat(g) / 255.0,
+            blue: CGFloat(b) / 255.0,
             alpha: 1.0
         )
     }
@@ -303,6 +509,7 @@ extension EditProfileView {
         let r = Int(rF * 255)
         let g = Int(gF * 255)
         let b = Int(bF * 255)
+        
         return String(format: "#%02X%02X%02X", r, g, b)
     }
     #else

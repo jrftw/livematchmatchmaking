@@ -2,10 +2,12 @@
 //  MainMenuView.swift
 //  LIVE Match - Matchmaking
 //
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  iOS 15.6+, macOS 11.5, visionOS 2.0+
 //
-//  Updated to accept a @Binding var selectedScreen so we can properly navigate to
-//  SignInView(selectedScreen: $selectedScreen), AppSettingsView(selectedScreen: $selectedScreen), etc.
+//  Default order with booleans controlling each item’s inclusion.
+//  - Items #1–6 also hide if not logged in.
+//  - Item #7 hides if logged in.
+//  - Items #8–9 visible to everyone if their booleans are true.
 //
 
 import SwiftUI
@@ -16,8 +18,19 @@ public struct MainMenuView: View {
     // MARK: - ObservedObject
     @ObservedObject private var authManager = AuthManager.shared
     
-    // MARK: - Binding
+    // Binding to track which main screen is selected
     @Binding var selectedScreen: MainScreen
+    
+    // MARK: - Boolean Toggles (turn each page on/off in code)
+    private let showLiveMatchmaking      = true
+    private let showGameMatchmaking      = false
+    private let showTournaments          = false
+    private let showAchievements         = false
+    private let showLeaderboards         = false
+    private let showAgencyCNReview       = false
+    private let showCreateAccountOrLogin = true
+    private let showHelp                 = true
+    private let showSettings             = true
     
     // MARK: - State
     @StateObject private var reorderManager = ReorderManager()
@@ -69,6 +82,7 @@ public struct MainMenuView: View {
                                             .padding()
                                             .background(item.color.opacity(0.15))
                                             .clipShape(Circle())
+                                        
                                         Text(item.title)
                                             .font(.headline)
                                             .foregroundColor(.primary)
@@ -101,91 +115,149 @@ public struct MainMenuView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            let items = buildMenuItems()
-            reorderManager.loadItems(with: items)
+            // Build the full list in default order, then filter based on login.
+            let defaultItems = allMenuItems()
+            let final = filterMenuItems(defaultItems)
+            
+            reorderManager.loadItems(with: final)
         }
     }
     
-    // MARK: - Build Menu Items
-    private func buildMenuItems() -> [MenuItem] {
-        // If user is a guest => normal items + "Create Account or Log In"
-        if authManager.isGuest {
-            var items = normalItems()
-            items.insert(
-                MenuItem(
-                    title: "Create Account or Log In",
-                    icon: "person.crop.circle.badge.plus",
-                    color: .blue,
-                    // Pass selectedScreen to SignInView
-                    destination: AnyView(SignInView(selectedScreen: $selectedScreen))
-                ),
-                at: 0
-            )
-            return items
-        }
+    // MARK: - Default Ordered Items
+    ///
+    /// We only add the item if the corresponding boolean is true.
+    /// Then we apply login-based hiding in filterMenuItems().
+    private func allMenuItems() -> [MenuItem] {
+        var items = [MenuItem]()
         
-        // If user is logged in => normal items
-        if authManager.user != nil {
-            return normalItems()
-        }
-        
-        // If user == nil & NOT guest => minimal set
-        return [
-            MenuItem(
-                title: "Create Account or Log In",
-                icon: "person.crop.circle.badge.plus",
-                color: .blue,
-                destination: AnyView(SignInView(selectedScreen: $selectedScreen))
-            ),
-            MenuItem(
-                title: "Settings",
-                icon: "gearshape.fill",
-                color: .gray,
-                destination: AnyView(AppSettingsView(selectedScreen: $selectedScreen))
-            )
-        ]
-    }
-    
-    // MARK: - Normal Items
-    private func normalItems() -> [MenuItem] {
-        [
-            MenuItem(
+        // 1. LIVE Matchmaking (logged in only)
+        if showLiveMatchmaking {
+            items.append(MenuItem(
                 title: "LIVE Matchmaking",
                 icon: "video.fill",
                 color: .purple,
                 destination: AnyView(StreamingView())
-            ),
-            MenuItem(
+            ))
+        }
+        
+        // 2. Game Matchmaking (logged in only)
+        if showGameMatchmaking {
+            items.append(MenuItem(
                 title: "Game Matchmaking",
                 icon: "gamecontroller.fill",
                 color: .blue,
                 destination: AnyView(MatchmakingView())
-            ),
-            MenuItem(
+            ))
+        }
+        
+        // 3. Tournaments (logged in only)
+        if showTournaments {
+            items.append(MenuItem(
                 title: "Tournaments",
                 icon: "rosette",
                 color: .red,
                 destination: AnyView(TournamentListView())
-            ),
-            MenuItem(
+            ))
+        }
+        
+        // 4. Achievements (logged in only)
+        if showAchievements {
+            items.append(MenuItem(
                 title: "Achievements",
                 icon: "star.fill",
                 color: .yellow,
                 destination: AnyView(AchievementsView())
-            ),
-            MenuItem(
+            ))
+        }
+        
+        // 5. Leaderboards (logged in only)
+        if showLeaderboards {
+            items.append(MenuItem(
                 title: "Leaderboards",
                 icon: "list.number",
                 color: .orange,
                 destination: AnyView(LeaderboardsView())
-            ),
-            MenuItem(
+            ))
+        }
+        
+        // 6. Agency / Creator Network Review (logged in only)
+        if showAgencyCNReview {
+            items.append(MenuItem(
+                title: "Agency / Creator Network Review",
+                icon: "magnifyingglass.circle",
+                color: .indigo,
+                destination: AnyView(AgencyCNReviewView())
+            ))
+        }
+        
+        // 7. Create Account or Log In (not logged in only)
+        if showCreateAccountOrLogin {
+            items.append(MenuItem(
+                title: "Create Account or Log In",
+                icon: "person.crop.circle.badge.plus",
+                color: .blue,
+                destination: AnyView(SignInView(selectedScreen: $selectedScreen))
+            ))
+        }
+        
+        // 8. Help (everyone)
+        if showHelp {
+            items.append(MenuItem(
+                title: "Help",
+                icon: "questionmark.circle",
+                color: .green,
+                destination: AnyView(HelpView())
+            ))
+        }
+        
+        // 9. Settings (everyone)
+        if showSettings {
+            items.append(MenuItem(
                 title: "Settings",
                 icon: "gearshape.fill",
                 color: .gray,
-                // Pass selectedScreen to AppSettingsView
                 destination: AnyView(AppSettingsView(selectedScreen: $selectedScreen))
-            )
-        ]
+            ))
+        }
+        
+        return items
+    }
+    
+    // MARK: - Filter Items Based on Login State
+    ///
+    /// After building the default array (minus booleans that are off),
+    /// we further hide #1–6 if not logged in, hide #7 if logged in.
+    ///
+    private func filterMenuItems(_ items: [MenuItem]) -> [MenuItem] {
+        var newItems = items
+        
+        let isLoggedIn = (authManager.user != nil && !authManager.isGuest)
+        
+        for i in newItems.indices {
+            let title = newItems[i].title
+            
+            switch title {
+            case "LIVE Matchmaking",
+                 "Game Matchmaking",
+                 "Tournaments",
+                 "Achievements",
+                 "Leaderboards",
+                 "Agency / Creator Network Review":
+                // Hide if not logged in
+                if !isLoggedIn {
+                    newItems[i].isHidden = true
+                }
+            case "Create Account or Log In":
+                // Hide if logged in
+                if isLoggedIn {
+                    newItems[i].isHidden = true
+                }
+            // "Help" / "Settings" => do nothing
+            default:
+                break
+            }
+        }
+        
+        return newItems
     }
 }

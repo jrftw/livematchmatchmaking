@@ -44,28 +44,16 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				"Main/Logic/Models/Profile/Profile Logic/Sign up/UIColor+Extensions.swift",
 			);
 			target = 79FB20A12D4947F7005CB891 /* LIVE Match - Matchmaking */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		79FB28CC2D503710005CB891 /* Exceptions for "LIVE Match - Matchmaking" folder in "Copy Bundle Resources" phase from "LIVE Match - Matchmaking" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 79FB20A02D4947F7005CB891 /* Resources */;
-			membershipExceptions = (
-				"Main/Logic/Models/Profile/Profile Logic/Sign up/UIColor+Extensions.swift",
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		79FB20A42D4947F7005CB891 /* LIVE Match - Matchmaking */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				79FB20B22D4947F8005CB891 /* Exceptions for "LIVE Match - Matchmaking" folder in "LIVE Match - Matchmaking" target */,
-				79FB28CC2D503710005CB891 /* Exceptions for "LIVE Match - Matchmaking" folder in "Copy Bundle Resources" phase from "LIVE Match - Matchmaking" target */,
 			);
 			path = "LIVE Match - Matchmaking";
 			sourceTree = "<group>";

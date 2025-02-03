@@ -1,5 +1,7 @@
-// MARK: LikeService.swift
+// MARK: - LikeService.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// Manages liking/unliking posts.
+
 import Foundation
 import Firebase
 import FirebaseAuth

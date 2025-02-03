@@ -1,5 +1,7 @@
-// MARK: CommentService.swift
+// MARK: - CommentService.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// Manages creating and fetching comments for posts.
+
 import Foundation
 import Firebase
 import FirebaseAuth

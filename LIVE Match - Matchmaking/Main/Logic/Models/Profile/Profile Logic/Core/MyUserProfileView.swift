@@ -1,136 +1,386 @@
 // MARK: - MyUserProfileView.swift
-// Displays a MyUserProfile in a simple scrollable view.
+// Cleaned up to display banner and avatar in the center,
+// then clanTag + username, bio, displayName, followers/following,
+// W/L stats, and a single row of buttons.
+// If it’s the current user’s profile, show only “Edit Profile” and “Share”.
+// Otherwise, show “Follow” and “Message” in that row.
 
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct MyUserProfileView: View {
     public let profile: MyUserProfile
+    
     @State private var showingEditSheet = false
+    @State private var currentWins: Int
+    @State private var currentLosses: Int
+    
+    // If you prefer to detect whether it's the current user:
+    private var isCurrentUser: Bool {
+        guard let currentUID = Auth.auth().currentUser?.uid else { return false }
+        return (profile.id == currentUID)
+    }
+    
+    private let db = Firestore.firestore()
     
     public init(profile: MyUserProfile) {
         self.profile = profile
+        _currentWins = State(initialValue: profile.wins)
+        _currentLosses = State(initialValue: profile.losses)
     }
     
     public var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                bannerSection()
-                headerSection()
-                accountInfoSection()
-                tagsSection()
-            }
-        }
-        .navigationTitle("My Profile")
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showingEditSheet) {
-            EditProfileView(profile: profile)
-        }
-    }
-    
-    private func bannerSection() -> some View {
-        Group {
-            if let bannerURL = profile.bannerURL,
-               !bannerURL.isEmpty,
-               let url = URL(string: bannerURL) {
-                AsyncImage(url: url) { imagePhase in
-                    switch imagePhase {
-                    case .empty:
-                        Color.gray.opacity(0.3)
-                    case .success(let img):
-                        img.resizable().scaledToFit()
-                    case .failure:
-                        Color.gray.opacity(0.3)
-                    @unknown default:
-                        Color.gray.opacity(0.3)
-                    }
-                }
-                .frame(maxHeight: 180)
-            } else {
-                Color.gray.opacity(0.3).frame(maxHeight: 180)
-            }
-        }
-    }
-    
-    private func headerSection() -> some View {
-        HStack(spacing: 16) {
-            if let picURL = profile.profilePictureURL,
-               !picURL.isEmpty,
-               let url = URL(string: picURL) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        Color.gray.opacity(0.3)
-                    case .success(let loaded):
-                        loaded.resizable().scaledToFill()
-                    case .failure:
-                        Color.gray.opacity(0.3)
-                    @unknown default:
-                        Color.gray.opacity(0.3)
-                    }
-                }
-                .frame(width: 80, height: 80)
-                .clipShape(Circle())
-            } else {
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 80, height: 80)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(profile.displayName.isEmpty ? "Unknown" : profile.displayName)
-                    .font(.headline)
+            VStack(spacing: 0) {
                 
-                if let clan = profile.clanTag, !clan.isEmpty {
-                    Text("Clan: \(clan)").font(.subheadline)
+                // MARK: - Banner (Centered)
+                ZStack {
+                    if let bannerURL = profile.bannerURL,
+                       !bannerURL.isEmpty,
+                       let url = URL(string: bannerURL) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                Color.gray.opacity(0.3)
+                            case .success(let img):
+                                img.resizable().scaledToFill()
+                            case .failure:
+                                Color.gray.opacity(0.3)
+                            @unknown default:
+                                Color.gray.opacity(0.3)
+                            }
+                        }
+                    } else {
+                        Color.gray.opacity(0.3)
+                    }
                 }
-            }
-            Spacer()
-            
-            Menu {
-                Button("Edit Profile") {
-                    showingEditSheet = true
+                .frame(height: 220)
+                .clipped()
+                
+                // MARK: - Avatar (Centered)
+                ZStack {
+                    Circle().fill(Color.white)
+                        .frame(width: 130, height: 130)
+                    
+                    if let picURL = profile.profilePictureURL,
+                       !picURL.isEmpty,
+                       let url = URL(string: picURL) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                Circle().fill(Color.gray.opacity(0.3))
+                            case .success(let img):
+                                img.resizable().scaledToFill()
+                            case .failure:
+                                Circle().fill(Color.gray.opacity(0.3))
+                            @unknown default:
+                                Circle().fill(Color.gray.opacity(0.3))
+                            }
+                        }
+                        .clipShape(Circle())
+                    } else {
+                        Circle().fill(Color.gray.opacity(0.3))
+                    }
                 }
-                Button("Share Profile") {
-                    // Implementation if needed
+                .frame(width: 130, height: 130)
+                .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                .offset(y: -65)
+                .padding(.bottom, -65)
+                
+                // MARK: - Clan Tag + Username
+                VStack(spacing: 4) {
+                    if let clan = profile.clanTag, !clan.isEmpty {
+                        Text("\(clan) @\(profile.username)")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.blue)
+                    } else {
+                        Text("@\(profile.username)")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
                 }
-            } label: {
-                Image(systemName: "ellipsis.circle")
+                .padding(.top, 8)
+                
+                // MARK: - Bio
+                if let b = profile.bio, !b.isEmpty {
+                    Text(b)
+                        .font(.body)
+                        .padding(.top, 4)
+                }
+                
+                // MARK: - Display Name
+                Text(profile.displayName.isEmpty ? "Unknown" : profile.displayName)
                     .font(.title2)
-                    .rotationEffect(.degrees(90))
-            }
-        }
-        .padding(.horizontal)
-    }
-    
-    private func accountInfoSection() -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let b = profile.bio, !b.isEmpty {
-                Text("Bio: \(b)").font(.subheadline)
-            }
-            if let bday = profile.birthday, !bday.isEmpty {
-                Text("Birthday: \(bday)").font(.subheadline)
-            }
-            if let em = profile.email, !em.isEmpty {
-                Text("Email: \(em)").font(.subheadline)
-            }
-            if let ph = profile.phoneNumber, !ph.isEmpty {
-                Text("Phone: \(ph)").font(.subheadline)
-            }
-        }
-        .padding(.horizontal)
-    }
-    
-    @ViewBuilder
-    private func tagsSection() -> some View {
-        if !profile.tags.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Tags:").font(.headline)
-                Text(profile.tags.joined(separator: ", "))
-                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .padding(.top, 8)
+                
+                // MARK: - Followers / Following
+                HStack(spacing: 32) {
+                    VStack {
+                        Text("\(profile.followersCount)")
+                            .font(.headline)
+                        Text("Followers")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    VStack {
+                        Text("\(profile.followingCount)")
+                            .font(.headline)
+                        Text("Following")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.top, 8)
+                
+                // MARK: - Win / Lose Stats
+                winLoseSection()
+                
+                // MARK: - Button Row
+                buttonRow()
+                    .padding(.top, 16)
+                
+                // MARK: - Visibility Toggles, Tags, Social Links, etc.
+                extraInfoSection()
+                
+                // MARK: - Example placeholders
+                platformTeamsSection()
+                feedSection()
+                
+                Spacer().frame(height: 32)
             }
             .padding(.horizontal)
         }
+        .sheet(isPresented: $showingEditSheet) {
+            EditProfileView(profile: profile)
+        }
+        .navigationTitle("My Profile")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+extension MyUserProfileView {
+    
+    // MARK: - W/L Section
+    private func winLoseSection() -> some View {
+        let ratio = currentLosses == 0
+            ? (currentWins > 0 ? "∞" : "0.0")
+            : String(format: "%.2f", Double(currentWins) / Double(currentLosses))
+        
+        return VStack(spacing: 8) {
+            Text("Win / Lose Stats")
+                .font(.headline)
+            HStack(spacing: 20) {
+                VStack {
+                    Text("Wins").font(.subheadline)
+                    HStack(spacing: 12) {
+                        Button("-") {
+                            if currentWins > 0 { currentWins -= 1 }
+                            updateWinsLosses()
+                        }
+                        Text("\(currentWins)").font(.headline)
+                        Button("+") {
+                            currentWins += 1
+                            updateWinsLosses()
+                        }
+                    }
+                }
+                VStack {
+                    Text("Losses").font(.subheadline)
+                    HStack(spacing: 12) {
+                        Button("-") {
+                            if currentLosses > 0 { currentLosses -= 1 }
+                            updateWinsLosses()
+                        }
+                        Text("\(currentLosses)").font(.headline)
+                        Button("+") {
+                            currentLosses += 1
+                            updateWinsLosses()
+                        }
+                    }
+                }
+            }
+            Text("W/L Ratio: \(ratio)")
+                .foregroundColor(.secondary)
+        }
+        .padding(.top, 8)
+    }
+    
+    // MARK: - Button Row
+    private func buttonRow() -> some View {
+        HStack(spacing: 20) {
+            if isCurrentUser {
+                Button("Edit Profile") {
+                    showingEditSheet = true
+                }
+                .font(.headline)
+                .padding()
+                .background(Color.blue.opacity(0.8))
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                
+                Button("Share") {
+                    // share logic
+                }
+                .font(.headline)
+                .padding()
+                .background(Color.green.opacity(0.8))
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                
+            } else {
+                Button("Follow") {
+                    // follow logic
+                }
+                .font(.headline)
+                .padding()
+                .background(Color.blue.opacity(0.8))
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                
+                Button("Message") {
+                    // message logic
+                }
+                .font(.headline)
+                .padding()
+                .background(Color.green.opacity(0.8))
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                
+                // If you really want "Edit Profile" + "Share" for everyone,
+                // you can uncomment. But typically, only the owner can edit:
+                // Button("Edit Profile") { ... }
+                // Button("Share") { ... }
+            }
+        }
+    }
+    
+    // MARK: - Extra Info Section
+    private func extraInfoSection() -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Birthday
+            if profile.birthdayPublicly,
+               let bday = profile.birthday,
+               !bday.isEmpty {
+                Text("Birthday: \(bday)")
+                    .font(.subheadline)
+            }
+            
+            // Email
+            if profile.emailPublicly,
+               let em = profile.email,
+               !em.isEmpty {
+                Text("Email: \(em)")
+                    .font(.subheadline)
+            }
+            
+            // Phone
+            if profile.phonePublicly,
+               let ph = profile.phoneNumber,
+               !ph.isEmpty {
+                Text("Phone: \(ph)")
+                    .font(.subheadline)
+            }
+            
+            // Tags
+            if !profile.tags.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Tags:")
+                        .font(.headline)
+                    Text(profile.tags.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 8)
+            }
+            
+            // Social Links
+            if !profile.socialLinks.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Social Links:")
+                        .font(.headline)
+                    ForEach(Array(profile.socialLinks.keys), id: \.self) { key in
+                        if let link = profile.socialLinks[key], !link.isEmpty {
+                            Text("\(key): \(link)")
+                                .font(.subheadline)
+                                .foregroundColor(.blue)
+                        }
+                    }
+                }
+                .padding(.top, 8)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 16)
+    }
+    
+    // MARK: - Example Platforms / Teams
+    private func platformTeamsSection() -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Platforms / Agencies / Teams")
+                .font(.headline)
+            Text("(Filler placeholder for now)")
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 20)
+    }
+    
+    // MARK: - Example Feed Section
+    private func feedSection() -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Feed / Tournaments")
+                .font(.headline)
+            Text("(Filler content here)")
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 12)
+    }
+    
+    // MARK: - Firestore Update
+    private func updateWinsLosses() {
+        guard let uid = profile.id else { return }
+        db.collection("users").document(uid).setData([
+            "wins": currentWins,
+            "losses": currentLosses
+        ], merge: true)
+    }
+}
+
+// MARK: - CircleAvatarView
+@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+fileprivate struct CircleAvatarView: View {
+    let picURL: String?
+    
+    var body: some View {
+        ZStack {
+            Circle().fill(Color.gray.opacity(0.3))
+            if let urlStr = picURL,
+               !urlStr.isEmpty,
+               let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        Circle().fill(Color.gray.opacity(0.3))
+                    case .success(let img):
+                        img.resizable().scaledToFill()
+                    case .failure:
+                        Circle().fill(Color.gray.opacity(0.3))
+                    @unknown default:
+                        Circle().fill(Color.gray.opacity(0.3))
+                    }
+                }
+            }
+        }
+        .frame(width: 120, height: 120)
+        .clipShape(Circle())
+        .overlay(
+            Circle().stroke(Color.white, lineWidth: 3)
+        )
     }
 }

@@ -1,6 +1,6 @@
-// MARK: PostRowView.swift
+// MARK: - PostRowView.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Displays a single post with the user's profile pic.
+// Displays a single post with user info, plus Like/Comment/Follow buttons.
 
 import SwiftUI
 import AVKit
@@ -17,12 +17,17 @@ public struct PostRowView: View {
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // User info row
             HStack(alignment: .top, spacing: 12) {
-                if let picURL = rowVM.profilePicURL, !picURL.isEmpty, let url = URL(string: picURL) {
+                // Profile pic
+                if let picURL = rowVM.profilePicURL,
+                   !picURL.isEmpty,
+                   let url = URL(string: picURL) {
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .empty:
                             ProgressView()
+                                .frame(width: 44, height: 44)
                         case .success(let image):
                             image
                                 .resizable()
@@ -57,12 +62,14 @@ public struct PostRowView: View {
                 }
             }
             
+            // Post text
             if !post.text.isEmpty {
                 Text(post.text)
                     .font(.body)
                     .padding(.top, 4)
             }
             
+            // Post image
             if let imageURL = post.imageURL, !imageURL.isEmpty {
                 AsyncImage(url: URL(string: imageURL)) { phase in
                     switch phase {
@@ -84,6 +91,7 @@ public struct PostRowView: View {
                 }
             }
             
+            // Post video
             if let videoURL = post.videoURL, !videoURL.isEmpty {
                 if let url = URL(string: videoURL) {
                     VideoPlayer(player: AVPlayer(url: url))
@@ -93,17 +101,24 @@ public struct PostRowView: View {
                 }
             }
             
+            // Buttons row
             HStack(spacing: 30) {
                 Button("Like") {
                     guard let postId = post.id else { return }
-                    LikeService.shared.likePost(postId: postId) { _ in }
+                    LikeService.shared.likePost(postId: postId) { _ in
+                        // handle success/failure
+                    }
                 }
                 Button("Comment") {
                     guard let postId = post.id else { return }
-                    CommentService.shared.addComment(postId: postId, commentText: "Nice post!") { _ in }
+                    CommentService.shared.addComment(postId: postId, commentText: "Nice post!") { _ in
+                        // handle success/failure
+                    }
                 }
                 Button("Follow") {
-                    FollowService.shared.followUser(targetUserId: post.userId) { _ in }
+                    FollowService.shared.followUser(targetUserId: post.userId) { _ in
+                        // handle success/failure
+                    }
                 }
             }
             .font(.subheadline)

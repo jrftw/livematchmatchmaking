@@ -1,5 +1,7 @@
-// MARK: FollowService.swift
+// MARK: - FollowService.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// Manages following/unfollowing logic between users.
+
 import Foundation
 import Firebase
 import FirebaseAuth
@@ -15,6 +17,7 @@ public final class FollowService {
             completion(false)
             return
         }
+        
         let currentUserFollowingRef = db.collection("users")
             .document(currentUser.uid)
             .collection("following")
@@ -46,6 +49,7 @@ public final class FollowService {
             completion(false)
             return
         }
+        
         let currentUserFollowingRef = db.collection("users")
             .document(currentUser.uid)
             .collection("following")

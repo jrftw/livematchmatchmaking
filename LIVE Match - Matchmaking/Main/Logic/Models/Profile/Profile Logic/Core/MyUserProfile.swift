@@ -1,11 +1,11 @@
 // MARK: - MyUserProfile.swift
-// Minimal model matching references across the app.
 
 import SwiftUI
 import FirebaseFirestore
 
 public struct MyUserProfile: Codable, Identifiable {
-    @DocumentID public var id: String?
+    // Removed @DocumentID, so we can set id ourselves in code
+    public var id: String?
     
     public var firstName: String
     public var lastName: String
@@ -33,6 +33,12 @@ public struct MyUserProfile: Codable, Identifiable {
     
     public var createdAt: Date
     
+    // MARK: - New Fields
+    public var followersCount: Int
+    public var followingCount: Int
+    public var wins: Int
+    public var losses: Int
+    
     public init(
         id: String? = nil,
         firstName: String,
@@ -52,7 +58,11 @@ public struct MyUserProfile: Codable, Identifiable {
         socialLinks: [String: String],
         profilePictureURL: String? = nil,
         bannerURL: String? = nil,
-        createdAt: Date
+        createdAt: Date,
+        followersCount: Int = 0,
+        followingCount: Int = 0,
+        wins: Int = 0,
+        losses: Int = 0
     ) {
         self.id = id
         self.firstName = firstName
@@ -73,5 +83,9 @@ public struct MyUserProfile: Codable, Identifiable {
         self.profilePictureURL = profilePictureURL
         self.bannerURL = bannerURL
         self.createdAt = createdAt
+        self.followersCount = followersCount
+        self.followingCount = followingCount
+        self.wins = wins
+        self.losses = losses
     }
 }

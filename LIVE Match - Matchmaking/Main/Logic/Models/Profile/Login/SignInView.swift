@@ -90,7 +90,7 @@ extension SignInView {
         let _ = print("[SignInView] credentialFields invoked.")
         
         return VStack(spacing: 16) {
-            TextField("Email / Phone / Username", text: $credential)
+            TextField("Email", text: $credential)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
             

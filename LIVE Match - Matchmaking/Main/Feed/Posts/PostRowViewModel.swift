@@ -1,14 +1,5 @@
-//
-//  PostRowViewModel.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 1/30/25.
-//
-
-
-// MARK: PostRowViewModel.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Fetches the user's profile pic to display in the feed.
+// MARK: - PostRowViewModel.swift
+// Already included above. Shown again for completeness.
 
 import SwiftUI
 import Firebase
@@ -28,8 +19,8 @@ public final class PostRowViewModel: ObservableObject {
     private func fetchProfilePic() {
         db.collection("users").document(userId).addSnapshotListener { doc, _ in
             guard let data = doc?.data() else { return }
-            let pic = data["profilePictureURL"] as? String
-            self.profilePicURL = pic
+            // Must match your user doc field. E.g., "profilePictureURL"
+            self.profilePicURL = data["profilePictureURL"] as? String
         }
     }
 }

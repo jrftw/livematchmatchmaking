@@ -34,7 +34,7 @@ public struct LoginView: View {
                 Text("Log In")
                     .font(.largeTitle)
                 
-                TextField("Email / Phone / Username", text: $credential)
+                TextField("Email", text: $credential)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 
                 SecureField("Password", text: $password)
@@ -50,8 +50,7 @@ public struct LoginView: View {
                 }
                 
                 Button("Sign Up") {
-                    // Example: Switch to a sign-up flow or screen
-                    // selectedScreen = .profile or something else if needed
+                    // Example: Switch to a sign-up flow or another screen
                 }
                 .padding(.vertical, 8)
                 
@@ -116,9 +115,9 @@ extension LoginView {
                 showingError = true
                 return
             }
-            Auth.auth().sendPasswordReset(withEmail: email) { err in
-                if let err = err {
-                    errorMessage = err.localizedDescription
+            Auth.auth().sendPasswordReset(withEmail: email) { sendError in
+                if let sendError = sendError {
+                    errorMessage = sendError.localizedDescription
                 } else {
                     errorMessage = "Password reset email sent."
                 }
@@ -136,25 +135,18 @@ extension LoginView {
         }
         
         let db = Firestore.firestore()
+        // 1) Check if it's a username
         db.collection("users")
             .whereField("username", isEqualTo: credential)
-            .getDocuments { snap, err in
-                if let err = err {
-                    completion(nil)
-                    return
-                }
+            .getDocuments { snap, _ in  // '_' to ignore unused error
                 if let docs = snap?.documents, !docs.isEmpty,
                    let email = docs[0].data()["email"] as? String {
                     completion(email)
                 } else {
-                    // Next, check if credential is a phone
+                    // 2) Check if it's a phone
                     db.collection("users")
                         .whereField("phone", isEqualTo: credential)
-                        .getDocuments { snap2, err2 in
-                            if let err2 = err2 {
-                                completion(nil)
-                                return
-                            }
+                        .getDocuments { snap2, _ in  // '_' to ignore unused error
                             if let docs2 = snap2?.documents, !docs2.isEmpty,
                                let email2 = docs2[0].data()["email"] as? String {
                                 completion(email2)

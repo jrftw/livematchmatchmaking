@@ -1,4 +1,4 @@
-// MARK: ProfileNavigationService.swift
+// MARK: - ProfileNavigationService.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
 
 import SwiftUI

@@ -1,5 +1,7 @@
-// MARK: PostModel.swift
+// MARK: - Post.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// Make sure your user doc has "username" (or whatever you choose) and "profilePictureURL" fields.
+
 import SwiftUI
 import FirebaseFirestore
 
@@ -11,6 +13,8 @@ public struct Post: Identifiable, Codable {
     public var imageURL: String?
     public var videoURL: String?
     public var timestamp: Date
+    public var category: String?
+    public var taggedUsers: [String]
     
     public init(
         id: String? = nil,
@@ -19,7 +23,9 @@ public struct Post: Identifiable, Codable {
         text: String,
         imageURL: String? = nil,
         videoURL: String? = nil,
-        timestamp: Date
+        timestamp: Date,
+        category: String? = nil,
+        taggedUsers: [String] = []
     ) {
         self.id = id
         self.userId = userId
@@ -28,5 +34,7 @@ public struct Post: Identifiable, Codable {
         self.imageURL = imageURL
         self.videoURL = videoURL
         self.timestamp = timestamp
+        self.category = category
+        self.taggedUsers = taggedUsers
     }
 }

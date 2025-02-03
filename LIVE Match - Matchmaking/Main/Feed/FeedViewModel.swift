@@ -1,5 +1,9 @@
-// MARK: FeedViewModel.swift
+// MARK: - FeedViewModel.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//
+// Accepts multiple images, optional video URL, and tagged users.
+// Make sure your user doc has "username" and "profilePictureURL" if you want them visible.
+
 import SwiftUI
 import Firebase
 import FirebaseAuth
@@ -21,29 +25,36 @@ public final class FeedViewModel: ObservableObject {
             }
     }
     
-    public func createPost(text: String, imageURL: String? = nil, videoURL: String? = nil) {
+    // MARK: Create a new post from text, images, optional video, and tagged users
+    public func createPost(
+        text: String,
+        images: [UIImage],
+        videoURL: URL?,
+        taggedUsers: [String]
+    ) {
         guard let user = Auth.auth().currentUser else { return }
         let uid = user.uid
         
+        // Fetch the "username" (or "displayName") from Firestore
         db.collection("users").document(uid).getDocument { snapshot, error in
-            if let data = snapshot?.data(), error == nil {
-                let realUsername = data["name"] as? String ?? "Unknown"
-                self.finishCreatePost(
-                    userId: uid,
-                    username: realUsername,
-                    text: text,
-                    imageURL: imageURL,
-                    videoURL: videoURL
-                )
-            } else {
-                self.finishCreatePost(
-                    userId: uid,
-                    username: "User",
-                    text: text,
-                    imageURL: imageURL,
-                    videoURL: videoURL
-                )
-            }
+            // Replace "username" below with whichever field you actually store
+            // If you store "displayName", use snapshot?.data()?["displayName"]
+            let realUsername = snapshot?.data()?["username"] as? String ?? "Unknown"
+            
+            // In production:
+            // 1) Upload each image => get array of image URLs
+            // 2) Upload the video => get a URL
+            // 3) Pass them to finishCreatePost
+            self.finishCreatePost(
+                userId: uid,
+                username: realUsername,
+                text: text,
+                // placeholders for imageURL & videoURL
+                // Real logic would handle an array for multiple images
+                imageURL: nil,
+                videoURL: nil,
+                taggedUsers: taggedUsers
+            )
         }
     }
     
@@ -52,7 +63,8 @@ public final class FeedViewModel: ObservableObject {
         username: String,
         text: String,
         imageURL: String?,
-        videoURL: String?
+        videoURL: String?,
+        taggedUsers: [String]
     ) {
         let newPost = Post(
             userId: userId,
@@ -60,8 +72,11 @@ public final class FeedViewModel: ObservableObject {
             text: text,
             imageURL: imageURL,
             videoURL: videoURL,
-            timestamp: Date()
+            timestamp: Date(),
+            category: "Everyone", // Adjust as needed
+            taggedUsers: taggedUsers
         )
+        
         do {
             _ = try db.collection("posts").addDocument(from: newPost)
         } catch {
