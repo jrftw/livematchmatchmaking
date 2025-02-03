@@ -65,11 +65,22 @@ public struct Changelog {
             changes: [
                 "Introduced advanced bracket analytics dashboard for organizers, allowing real-time insights into bracket progression, participant performance, and audience engagement.",
                 "Refined location-based time zone detection with a new fallback system, making it easier for users to manually select their time zone if auto-detection fails.",
-                "Enhanced Discord integration for community engagement, enabling broadcast of match times and bracket progress directly into linked Discord servers.",
                 "Improved push notifications for user matchmaking events and updates, providing more responsive alerts and customizable notification settings.",
                 "Optimized UI performance on older iPads and Apple Silicon Macs, with reworked animations and data caching for a smoother overall experience.",
                 "Resolved minor layout issues on visionOS headsets, ensuring correct alignment and interactions in mixed reality environments.",
                 "Extended logging for troubleshooting bracket scheduling conflicts, helping organizers diagnose and fix overlapping match times more quickly."
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.0",
+            build: "5",
+            releaseDate: "2/3/25",
+            changes: [
+                "Implemented new matchmaking engine with enhanced skill analysis for more balanced matchups.",
+                "Expanded bracket analytics with real-time statistics overlays for tournament organizers.",
+                "Refined user interface in chat features, making quick reactions and group discussions more intuitive.",
+                "Improved server-side performance for match scheduling and bracket updates, reducing queue times.",
+                "Optimized memory usage across iOS, macOS, and visionOS platforms for smoother overall performance."
             ]
         )
     ]
