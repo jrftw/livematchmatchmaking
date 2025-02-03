@@ -23,10 +23,10 @@ public struct MainMenuView: View {
     
     // MARK: - Boolean Toggles (turn each page on/off in code)
     private let showLiveMatchmaking      = true
-    private let showGameMatchmaking      = false
+    private let showGameMatchmaking      = true
     private let showTournaments          = false
-    private let showAchievements         = false
-    private let showLeaderboards         = false
+    private let showAchievements         = true
+    private let showLeaderboards         = true
     private let showAgencyCNReview       = false
     private let showCreateAccountOrLogin = true
     private let showHelp                 = true

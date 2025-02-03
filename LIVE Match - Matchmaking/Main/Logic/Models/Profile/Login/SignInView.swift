@@ -11,7 +11,6 @@ public struct SignInView: View {
     // MARK: - Environment & Bindings
     @Environment(\.colorScheme) private var colorScheme
     
-    // Pass in a binding for the MainScreen so we can jump to .profile if desired
     @Binding var selectedScreen: MainScreen
     
     // MARK: - State
@@ -20,6 +19,9 @@ public struct SignInView: View {
     @State private var showSignUp = false
     @State private var showingError = false
     @State private var errorMessage = ""
+    
+    @State private var showingResetAlert = false
+    @State private var resetAlertMessage = ""
     
     // MARK: - Init
     public init(selectedScreen: Binding<MainScreen>) {
@@ -50,8 +52,14 @@ public struct SignInView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            // Present UniversalSignUpView in a sheet.
-            // Pass in selectedScreen so user can be sent to .profile upon creation.
+            .alert(isPresented: $showingResetAlert) {
+                let _ = print("[SignInView] Presenting reset alert => \(resetAlertMessage)")
+                return Alert(
+                    title: Text("Reset Email Sent"),
+                    message: Text(resetAlertMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
             .sheet(isPresented: $showSignUp) {
                 let _ = print("[SignInView] Presenting SignUpView sheet.")
                 UniversalSignUpView(selectedScreen: $selectedScreen)
@@ -117,6 +125,13 @@ extension SignInView {
             }
             .font(.headline)
             .padding(.vertical, 5)
+            
+            Button("Forgot Password") {
+                let _ = print("[SignInView] 'Forgot Password' tapped => forgotPasswordAction.")
+                forgotPasswordAction()
+            }
+            .font(.headline)
+            .padding(.vertical, 5)
         }
     }
 }
@@ -146,18 +161,43 @@ extension SignInView {
                     showingError = true
                 case .success:
                     let _ = print("[SignInView] signIn succeeded.")
-                    // Optionally go to profile on success
                     self.selectedScreen = .profile
                 }
             }
         }
     }
     
-    /// Interprets the credential as email, username, or phone, returning an email if found
+    private func forgotPasswordAction() {
+        let _ = print("[SignInView] forgotPasswordAction called => credential: \(credential)")
+        
+        resolveCredential(credential) { resolvedEmail in
+            let _ = print("[SignInView] resolveCredential completion => \(resolvedEmail ?? "nil")")
+            
+            guard let email = resolvedEmail, !email.isEmpty else {
+                let _ = print("[SignInView] Could not resolve credential for password reset => error.")
+                errorMessage = "No valid email found for the provided credential."
+                showingError = true
+                return
+            }
+            
+            let _ = print("[SignInView] Sending password reset => \(email)")
+            Auth.auth().sendPasswordReset(withEmail: email) { error in
+                if let err = error {
+                    let _ = print("[SignInView] password reset failed => \(err.localizedDescription)")
+                    errorMessage = err.localizedDescription
+                    showingError = true
+                } else {
+                    let _ = print("[SignInView] password reset email sent.")
+                    resetAlertMessage = "A password reset email has been sent to \(email)."
+                    showingResetAlert = true
+                }
+            }
+        }
+    }
+    
     private func resolveCredential(_ credential: String, completion: @escaping (String?) -> Void) {
         let _ = print("[SignInView] resolveCredential => \(credential)")
         
-        // If '@' is present, assume it's an email
         if credential.contains("@") {
             let _ = print("[SignInView] '@' detected => using credential as email.")
             completion(credential)
