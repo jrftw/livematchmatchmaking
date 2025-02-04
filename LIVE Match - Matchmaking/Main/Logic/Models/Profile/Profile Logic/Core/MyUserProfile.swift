@@ -5,7 +5,7 @@ import SwiftUI
 import FirebaseFirestore
 
 public struct MyUserProfile: Codable, Identifiable {
-    @DocumentID public var id: String? // Use @DocumentID for easier Firestore reads
+    @DocumentID public var id: String?
     
     public var firstName: String
     public var lastName: String
@@ -39,7 +39,6 @@ public struct MyUserProfile: Codable, Identifiable {
     
     public var location: String?
     
-    // Use a single, consistent init so all code references MyUserProfile
     public init(
         id: String? = nil,
         firstName: String,

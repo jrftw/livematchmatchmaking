@@ -10,9 +10,13 @@ public struct PostRowView: View {
     @StateObject private var rowVM: PostRowViewModel
     public let post: Post
     
+    // MARK: Comment Composer
+    @State private var showCommentSheet = false
+    @State private var commentText = ""
+    
     public init(post: Post) {
         self.post = post
-        _rowVM = StateObject(wrappedValue: PostRowViewModel(userId: post.userId))
+        _rowVM = StateObject(wrappedValue: PostRowViewModel(userId: post.userId, postId: post.id))
     }
     
     public var body: some View {
@@ -34,7 +38,7 @@ public struct PostRowView: View {
                                 .scaledToFill()
                                 .frame(width: 44, height: 44)
                                 .clipShape(Circle())
-                        case .failure(_):
+                        case .failure:
                             Circle().fill(Color.gray)
                                 .frame(width: 44, height: 44)
                         @unknown default:
@@ -81,7 +85,7 @@ public struct PostRowView: View {
                             .scaledToFit()
                             .cornerRadius(10)
                             .padding(.vertical, 4)
-                    case .failure(_):
+                    case .failure:
                         Color.red
                             .frame(height: 200)
                             .cornerRadius(10)
@@ -103,21 +107,24 @@ public struct PostRowView: View {
             
             // Buttons row
             HStack(spacing: 30) {
-                Button("Like") {
+                Button(rowVM.isLiked ? "Unlike" : "Like") {
                     guard let postId = post.id else { return }
-                    LikeService.shared.likePost(postId: postId) { _ in
-                        // handle success/failure
+                    if rowVM.isLiked {
+                        LikeService.shared.unlikePost(postId: postId) { _ in }
+                    } else {
+                        LikeService.shared.likePost(postId: postId) { _ in }
                     }
                 }
+                
                 Button("Comment") {
-                    guard let postId = post.id else { return }
-                    CommentService.shared.addComment(postId: postId, commentText: "Nice post!") { _ in
-                        // handle success/failure
-                    }
+                    showCommentSheet = true
                 }
-                Button("Follow") {
-                    FollowService.shared.followUser(targetUserId: post.userId) { _ in
-                        // handle success/failure
+                
+                Button(rowVM.isFollowing ? "Unfollow" : "Follow") {
+                    if rowVM.isFollowing {
+                        FollowService.shared.unfollowUser(targetUserId: post.userId) { _ in }
+                    } else {
+                        FollowService.shared.followUser(targetUserId: post.userId) { _ in }
                     }
                 }
             }
@@ -129,5 +136,26 @@ public struct PostRowView: View {
                 .foregroundColor(.gray)
         }
         .padding(.vertical, 8)
+        .sheet(isPresented: $showCommentSheet) {
+            VStack(spacing: 16) {
+                Text("Add a Comment").font(.headline)
+                TextField("Type your comment here...", text: $commentText)
+                    .textFieldStyle(.roundedBorder)
+                HStack {
+                    Spacer()
+                    Button("Submit") {
+                        guard let postId = post.id else { return }
+                        CommentService.shared.addComment(postId: postId, commentText: commentText) { _ in }
+                        showCommentSheet = false
+                        commentText = ""
+                    }
+                    Button("Cancel") {
+                        showCommentSheet = false
+                    }
+                }
+                .padding(.top, 8)
+            }
+            .padding()
+        }
     }
 }

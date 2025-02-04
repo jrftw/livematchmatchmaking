@@ -313,7 +313,7 @@ extension MyUserProfileView {
         VStack(alignment: .leading, spacing: 4) {
             Text("Platforms / Agencies / Teams")
                 .font(.headline)
-            Text("(Filler placeholder for now)")
+            Text("(No Content Yet)")
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -325,7 +325,7 @@ extension MyUserProfileView {
         VStack(alignment: .leading, spacing: 4) {
             Text("Feed / Tournaments")
                 .font(.headline)
-            Text("(Filler content here)")
+            Text("(No Content Yet)")
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

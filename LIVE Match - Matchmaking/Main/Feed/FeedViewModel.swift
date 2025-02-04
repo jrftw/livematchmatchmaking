@@ -1,8 +1,6 @@
 // MARK: - FeedViewModel.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//
 // Accepts multiple images, optional video URL, and tagged users.
-// Make sure your user doc has "username" and "profilePictureURL" if you want them visible.
 
 import SwiftUI
 import Firebase
@@ -25,7 +23,6 @@ public final class FeedViewModel: ObservableObject {
             }
     }
     
-    // MARK: Create a new post from text, images, optional video, and tagged users
     public func createPost(
         text: String,
         images: [UIImage],
@@ -35,22 +32,14 @@ public final class FeedViewModel: ObservableObject {
         guard let user = Auth.auth().currentUser else { return }
         let uid = user.uid
         
-        // Fetch the "username" (or "displayName") from Firestore
         db.collection("users").document(uid).getDocument { snapshot, error in
-            // Replace "username" below with whichever field you actually store
-            // If you store "displayName", use snapshot?.data()?["displayName"]
             let realUsername = snapshot?.data()?["username"] as? String ?? "Unknown"
             
-            // In production:
-            // 1) Upload each image => get array of image URLs
-            // 2) Upload the video => get a URL
-            // 3) Pass them to finishCreatePost
+            // Upload images/videos to Storage in production if needed. For now, placeholders:
             self.finishCreatePost(
                 userId: uid,
                 username: realUsername,
                 text: text,
-                // placeholders for imageURL & videoURL
-                // Real logic would handle an array for multiple images
                 imageURL: nil,
                 videoURL: nil,
                 taggedUsers: taggedUsers
@@ -73,7 +62,7 @@ public final class FeedViewModel: ObservableObject {
             imageURL: imageURL,
             videoURL: videoURL,
             timestamp: Date(),
-            category: "Everyone", // Adjust as needed
+            category: "Everyone",
             taggedUsers: taggedUsers
         )
         

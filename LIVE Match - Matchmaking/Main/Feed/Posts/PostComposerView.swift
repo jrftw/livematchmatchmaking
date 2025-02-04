@@ -8,19 +8,18 @@ import SwiftUI
 public struct PostComposerView: View {
     @Environment(\.dismiss) private var dismiss
     
-    // MARK: User Input
     @State private var postText = ""
     @State private var selectedImages: [UIImage] = []
     @State private var selectedVideoURL: URL? = nil
     @State private var taggedUsers: [String] = []
     
-    public let onPost: (String, [UIImage], URL?, [String]) -> Void
+    @State private var potentialUsers: [String] = []
+    @State private var showingUserSearch = false
     
-    // MARK: - Picker States
     @State private var showingImagePicker = false
     @State private var showingVideoPicker = false
-    @State private var showingUserSearch = false
-    @State private var potentialUsers: [String] = []
+    
+    public let onPost: (String, [UIImage], URL?, [String]) -> Void
     
     public init(onPost: @escaping (String, [UIImage], URL?, [String]) -> Void) {
         self.onPost = onPost
@@ -30,7 +29,6 @@ public struct PostComposerView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Post Text
                     TextEditor(text: $postText)
                         .frame(minHeight: 120)
                         .padding(.horizontal, 4)
@@ -39,13 +37,11 @@ public struct PostComposerView: View {
                                 .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
                         )
                         .onChange(of: postText) { newValue in
-                            // Show mention UI if last char is '@'
                             if newValue.last == "@" {
                                 showingUserSearch = true
                             }
                         }
                     
-                    // Attached Images
                     if !selectedImages.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
@@ -60,21 +56,18 @@ public struct PostComposerView: View {
                         }
                     }
                     
-                    // Attached Video
                     if let vidURL = selectedVideoURL {
                         Text("Attached Video: \(vidURL.lastPathComponent)")
                             .font(.subheadline)
                             .foregroundColor(.blue)
                     }
                     
-                    // Tagged Users
                     if !taggedUsers.isEmpty {
                         Text("Tagged: \(taggedUsers.joined(separator: ", "))")
                             .font(.footnote)
                             .foregroundColor(.blue)
                     }
                     
-                    // Action Buttons
                     HStack(spacing: 16) {
                         Button {
                             showingImagePicker = true
@@ -98,7 +91,6 @@ public struct PostComposerView: View {
                         .buttonStyle(.bordered)
                     }
                     
-                    // Post Button
                     Button {
                         onPost(postText, selectedImages, selectedVideoURL, taggedUsers)
                         dismiss()
@@ -125,23 +117,27 @@ public struct PostComposerView: View {
                     }
                 }
             }
-            // Image picker
+            .onAppear {
+                fetchAllUsernames()
+            }
             .sheet(isPresented: $showingImagePicker) {
+                #if os(iOS) || os(visionOS)
                 MultiImagePicker(images: $selectedImages, selectionLimit: 5)
+                #endif
             }
-            // Video picker
             .sheet(isPresented: $showingVideoPicker) {
+                #if os(iOS) || os(visionOS)
                 VideoPicker(videoURL: $selectedVideoURL)
+                #endif
             }
-            // Mention user search
             .sheet(isPresented: $showingUserSearch) {
                 UserSearchView(
-                    potentialUsers: potentialUsers,
+                    users: potentialUsers,
                     onSelect: { user in
                         if !postText.hasSuffix("@") {
                             postText.append(" @\(user)")
                         } else {
-                            postText.append("\(user)")
+                            postText.append(user)
                         }
                         taggedUsers.append(user)
                     }
@@ -152,12 +148,19 @@ public struct PostComposerView: View {
         .navigationViewStyle(StackNavigationViewStyle())
         #endif
     }
+    
+    private func fetchAllUsernames() {
+        FirebaseManager.shared.db.collection("users")
+            .getDocuments { snap, err in
+                guard let docs = snap?.documents, err == nil else { return }
+                self.potentialUsers = docs.compactMap { $0.data()["username"] as? String }
+            }
+    }
 }
 
-// MARK: - UserSearchView
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 fileprivate struct UserSearchView: View {
-    let potentialUsers: [String]
+    let users: [String]
     let onSelect: (String) -> Void
     
     @Environment(\.dismiss) private var dismiss
@@ -188,8 +191,8 @@ fileprivate struct UserSearchView: View {
     
     private var filteredResults: [String] {
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
-            return potentialUsers
+            return users
         }
-        return potentialUsers.filter { $0.localizedCaseInsensitiveContains(query) }
+        return users.filter { $0.localizedCaseInsensitiveContains(query) }
     }
 }

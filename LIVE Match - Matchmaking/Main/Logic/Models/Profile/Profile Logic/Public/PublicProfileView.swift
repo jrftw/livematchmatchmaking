@@ -1,6 +1,5 @@
 // MARK: - PublicProfileView.swift
-// Cleaned up per request, showing a centered banner and profile,
-// with conditional buttons on one line, and the requested sections in order.
+// Cleaned up, showing a centered banner and profile, plus real user posts.
 
 import SwiftUI
 
@@ -9,12 +8,14 @@ public struct PublicProfileView: View {
     public let profile: MyUserProfile
     public let isCurrentUser: Bool
     
-    @State private var userPosts: [String] = ["Public post #1", "Public post #2", "Public post #3"]
+    @StateObject private var postVM: ProfilePostsViewModel
+    
     @State private var showingEditSheet = false
     
     public init(profile: MyUserProfile, isCurrentUser: Bool = false) {
         self.profile = profile
         self.isCurrentUser = isCurrentUser
+        _postVM = StateObject(wrappedValue: ProfilePostsViewModel(userId: profile.id))
     }
     
     public var body: some View {
@@ -47,7 +48,7 @@ public struct PublicProfileView: View {
                 
                 // MARK: - Profile Picture (Centered)
                 ZStack {
-                    Circle().fill(Color.white) // subtle behind the avatar
+                    Circle().fill(Color.white)
                         .frame(width: 130, height: 130)
                     
                     if let picURL = profile.profilePictureURL,
@@ -58,8 +59,7 @@ public struct PublicProfileView: View {
                             case .empty:
                                 Circle().fill(Color.gray.opacity(0.3))
                             case .success(let img):
-                                img.resizable()
-                                    .scaledToFill()
+                                img.resizable().scaledToFill()
                             case .failure:
                                 Circle().fill(Color.gray.opacity(0.3))
                             @unknown default:
@@ -137,7 +137,7 @@ public struct PublicProfileView: View {
                 }
                 .padding(.top, 8)
                 
-                // MARK: - Action Buttons (One Line)
+                // MARK: - Action Buttons
                 HStack(spacing: 20) {
                     if isCurrentUser {
                         Button("Edit Profile") { showingEditSheet = true }
@@ -154,12 +154,14 @@ public struct PublicProfileView: View {
                             .foregroundColor(.white)
                             .cornerRadius(8)
                     } else {
-                        Button("Follow") {}
-                            .font(.headline)
-                            .padding()
-                            .background(Color.blue.opacity(0.8))
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+                        Button("Follow") {
+                            FollowService.shared.followUser(targetUserId: profile.id ?? "") { _ in }
+                        }
+                        .font(.headline)
+                        .padding()
+                        .background(Color.blue.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                         
                         Button("Message") {}
                             .font(.headline)
@@ -171,11 +173,25 @@ public struct PublicProfileView: View {
                 }
                 .padding(.top, 16)
                 
-                // MARK: - Additional Info
                 additionalInfoSection()
                 
-                // MARK: - Feed
-                feedSection()
+                // MARK: - Feed (Real User Posts)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(isCurrentUser ? "My Posts" : "\(profile.username)'s Posts")
+                        .font(.headline)
+                        .padding(.top, 20)
+                    
+                    if postVM.posts.isEmpty {
+                        Text("No posts yet.")
+                            .foregroundColor(.secondary)
+                    } else {
+                        ForEach(postVM.posts) { post in
+                            PostRowView(post: post)
+                            Divider()
+                        }
+                    }
+                }
+                .padding(.top, 8)
                 
                 Spacer(minLength: 32)
             }
@@ -189,10 +205,8 @@ public struct PublicProfileView: View {
         }
     }
     
-    // MARK: - Additional Info
     private func additionalInfoSection() -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            // If you have phone/birthday/email toggles or other data:
             if let bday = profile.birthday,
                profile.birthdayPublicly,
                !bday.isEmpty {
@@ -225,28 +239,5 @@ public struct PublicProfileView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 16)
-    }
-    
-    // MARK: - Feed Section
-    private func feedSection() -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(isCurrentUser ? "My Feed" : "\(profile.username)'s Posts")
-                .font(.headline)
-                .padding(.top, 20)
-            
-            if userPosts.isEmpty {
-                Text("No posts yet.")
-                    .foregroundColor(.secondary)
-            } else {
-                ForEach(userPosts, id: \.self) { post in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(post)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Divider()
-                    }
-                }
-            }
-        }
-        .padding(.top, 8)
     }
 }

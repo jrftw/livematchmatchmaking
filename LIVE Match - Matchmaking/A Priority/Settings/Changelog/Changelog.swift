@@ -19,10 +19,9 @@ public struct Changelog {
             build: "1",
             releaseDate: "1/29/25",
             changes: [
-                "Initial release of LIVE Match - Matchmaking.",
-                "Introduced bracket creation flow and CSV import.",
-                "Added user profiles with advanced editing.",
-                "Implemented Feed with multiple filter toggles."
+                "First launch of LIVE Match - Matchmaking with basic bracket creation and CSV import.",
+                "User profiles introduced, including advanced editing fields for personal info.",
+                "Feed feature added, letting you filter posts by categories (Everyone, Friends, etc.)."
             ]
         ),
         ChangelogEntry(
@@ -30,16 +29,14 @@ public struct Changelog {
             build: "2",
             releaseDate: "1/30/25",
             changes: [
-                "Added Template CSV download for brackets.",
-                "Improved bracket creation with predefined time zones.",
-                "Enhanced bracket creation wizard with a streamlined UI.",
-                "Fixed bottom bar navigation glitch (Menu icon now toggles properly).",
-                "Introduced reorderable Main Menu layout (Edit Layout mode).",
-                "Enabled Achievements page for non-guest users.",
-                "Enhanced messaging with group chat, direct messages, and reactions.",
-                "Improved synergy for macOS and visionOS, ensuring consistent UI.",
-                "Implemented robust code reorganization for better performance and clarity.",
-                "Various bug fixes and UI refinements to improve stability."
+                "Added a Template CSV download for easy bracket setup.",
+                "Simplified bracket creation and time zone selection steps.",
+                "Fixed a navigation bug where the bottom menu icon wouldn't toggle correctly.",
+                "Added an Edit Layout mode so you can reorder the Main Menu buttons.",
+                "Activated Achievements page for registered users, showing unlocked achievements.",
+                "Improved group and direct messaging, plus new reactions for fun interactions.",
+                "Better macOS and visionOS support for consistent layouts and styling.",
+                "Cleaned up code to make everything more organized and faster."
             ]
         ),
         ChangelogEntry(
@@ -47,15 +44,13 @@ public struct Changelog {
             build: "3",
             releaseDate: "2/1/25",
             changes: [
-                "Enabled in-app push notifications for real-time updates.",
-                "Refined Info.plist with correct usage descriptions for location tracking.",
-                "Resolved Apple validation issue regarding missing NSLocationWhenInUseUsageDescription.",
-                "Increased build number to 3 and improved background remote notification handling.",
-                "Implemented additional analytics events and crash reporting for better insights.",
-                "Enhanced reliability of match scheduling logic with improved date/time zone handling.",
-                "Unified UI design for iOS, macOS, and visionOS with optimized layout scaling.",
-                "Strengthened error handling and logging in bracket features.",
-                "General performance improvements and code refactoring for future expansions."
+                "Enabled real-time push notifications so you never miss bracket updates.",
+                "Updated Info.plist with location usage details to pass Apple checks.",
+                "Added better background remote notifications for behind-the-scenes updates.",
+                "Improved analytics and crash reporting for more stable tournament experiences.",
+                "Polished match scheduling to handle time zone differences more gracefully.",
+                "Unified UI across iOS, macOS, and visionOS for consistent design.",
+                "Enhanced bracket error handling with clearer alerts."
             ]
         ),
         ChangelogEntry(
@@ -63,12 +58,12 @@ public struct Changelog {
             build: "4",
             releaseDate: "2/2/25",
             changes: [
-                "Introduced advanced bracket analytics dashboard for organizers, allowing real-time insights into bracket progression, participant performance, and audience engagement.",
-                "Refined location-based time zone detection with a new fallback system, making it easier for users to manually select their time zone if auto-detection fails.",
-                "Improved push notifications for user matchmaking events and updates, providing more responsive alerts and customizable notification settings.",
-                "Optimized UI performance on older iPads and Apple Silicon Macs, with reworked animations and data caching for a smoother overall experience.",
-                "Resolved minor layout issues on visionOS headsets, ensuring correct alignment and interactions in mixed reality environments.",
-                "Extended logging for troubleshooting bracket scheduling conflicts, helping organizers diagnose and fix overlapping match times more quickly."
+                "Launched a powerful bracket analytics dashboard, giving organizers real-time insights (match progress, participant stats, etc.).",
+                "Upgraded time zone detection with a backup system that lets users manually choose if auto-detection fails.",
+                "Improved notifications for matchmaking events, giving you faster alerts and more control over how you’re notified.",
+                "Optimized the interface on older iPads and Apple Silicon Macs to reduce lag and improve animations.",
+                "Tweaked visionOS layouts to ensure correct alignment for both 2D and mixed reality views.",
+                "Enhanced bracket scheduling logs, making it easier to find and fix overlapping matches."
             ]
         ),
         ChangelogEntry(
@@ -76,11 +71,11 @@ public struct Changelog {
             build: "5",
             releaseDate: "2/3/25",
             changes: [
-                "Implemented new matchmaking engine with enhanced skill analysis for more balanced matchups.",
-                "Expanded bracket analytics with real-time statistics overlays for tournament organizers.",
-                "Refined user interface in chat features, making quick reactions and group discussions more intuitive.",
-                "Improved server-side performance for match scheduling and bracket updates, reducing queue times.",
-                "Optimized memory usage across iOS, macOS, and visionOS platforms for smoother overall performance."
+                "Rolled out a new matchmaking engine with smarter skill-based pairing to keep matches fair.",
+                "Expanded bracket analytics with real-time stat overlays that show how your tournament is shaping up.",
+                "Refreshed chat UI, so group and direct messages are easier to follow and respond to quickly.",
+                "Upgraded server handling for scheduling and bracket updates to reduce wait times.",
+                "Further optimized overall memory usage, ensuring smoother performance on all devices."
             ]
         )
     ]

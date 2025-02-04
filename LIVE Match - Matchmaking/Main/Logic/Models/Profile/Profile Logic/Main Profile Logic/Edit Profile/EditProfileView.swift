@@ -1,11 +1,5 @@
 // MARK: EditProfileView.swift
-
-//
-//  EditProfileView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//
+// iOS 15.6+, macOS 11.5, visionOS 2.0+
 
 import SwiftUI
 import FirebaseAuth
@@ -35,17 +29,14 @@ public struct EditProfileView: View {
     @State private var newPassword = ""
     @State private var confirmNewPassword = ""
     
-    // LM Studio sections
     @State private var showingViewerStudio = false
     @State private var showingCreatorStudio = false
     @State private var showingGamerStudio = false
     @State private var showingCommunityStudio = false
     
-    // Business Studio sections
     @State private var showingTeamStudio = false
     @State private var showingAgencyCreatorNetworkStudio = false
     
-    // Country picker (Location) in alphabetical order
     private let countries = [
         "Canada",
         "China",
@@ -147,7 +138,31 @@ public struct EditProfileView: View {
     }
 }
 
-// MARK: - Private Subviews
+// MARK: - ProfilePostsViewModel.swift (New)
+public final class ProfilePostsViewModel: ObservableObject {
+    @Published public var posts: [Post] = []
+    private let db = FirebaseManager.shared.db
+    
+    public init(userId: String?) {
+        guard let userId = userId else { return }
+        fetchPosts(for: userId)
+    }
+    
+    private func fetchPosts(for userId: String) {
+        db.collection("posts")
+            .whereField("userId", isEqualTo: userId)
+            .order(by: "timestamp", descending: true)
+            .addSnapshotListener { snapshot, error in
+                guard let docs = snapshot?.documents else {
+                    self.posts = []
+                    return
+                }
+                self.posts = docs.compactMap { try? $0.data(as: Post.self) }
+            }
+    }
+}
+
+// MARK: - Private Subviews in EditProfileView
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 private extension EditProfileView {
     func profileBannerSection() -> some View {
@@ -329,7 +344,7 @@ private extension EditProfileView {
             Button("Team Section") { showingTeamStudio = true }
             Button("Agency / Creator Network Section") { showingAgencyCreatorNetworkStudio = true }
             Button("Scouter Section (Coming Soon)") {}
-            .disabled(true)
+                .disabled(true)
         }
     }
 }
@@ -337,7 +352,6 @@ private extension EditProfileView {
 // MARK: - Save & Password
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 private extension EditProfileView {
-    
     func passwordChangeSheet() -> some View {
         NavigationView {
             Form {
@@ -347,7 +361,6 @@ private extension EditProfileView {
                 }
                 Section {
                     Button("Update Password") {
-                        // Implement actual password change logic
                         showingPasswordChange = false
                     }
                 }
@@ -430,7 +443,6 @@ private extension EditProfileView {
 // MARK: - Helpers & Bindings
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 private extension EditProfileView {
-    
     func bindingForNonOptional(_ keyPath: WritableKeyPath<MyUserProfile, String>) -> Binding<String> {
         Binding<String>(
             get: { profile[keyPath: keyPath] },

@@ -72,7 +72,6 @@ public struct FeedView: View {
             }
             .navigationTitle("Feed")
             .sheet(isPresented: $showingComposer) {
-                // Matches PostComposerView's callback: (String, [UIImage], URL?, [String]) -> Void
                 PostComposerView { text, images, optionalVideoURL, taggedUsers in
                     vm.createPost(
                         text: text,
@@ -91,12 +90,9 @@ public struct FeedView: View {
     // MARK: - Filtered Posts
     private var filteredPosts: [Post] {
         vm.posts.filter { post in
-            // "Everyone" shows all
             if showEveryone {
                 return true
             }
-            
-            // Otherwise filter by post.category
             var matches = false
             if showFriends && post.category == "Friends" { matches = true }
             if showFollowing && post.category == "Following" { matches = true }

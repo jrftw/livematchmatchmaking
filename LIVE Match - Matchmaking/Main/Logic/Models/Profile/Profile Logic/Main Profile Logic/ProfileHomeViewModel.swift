@@ -31,7 +31,6 @@ public final class ProfileHomeViewModel: ObservableObject {
         fetchProfile()
     }
     
-    /// Fetch MyUserProfile from Firestore, retrieving all defined fields.
     private func fetchProfile() {
         let db = Firestore.firestore()
         
@@ -81,9 +80,10 @@ public final class ProfileHomeViewModel: ObservableObject {
                     followersCount: data["followersCount"] as? Int ?? 0,
                     followingCount: data["followingCount"] as? Int ?? 0,
                     wins: data["wins"] as? Int ?? 0,
-                    losses: data["losses"] as? Int ?? 0
+                    losses: data["losses"] as? Int ?? 0,
+                    location: data["location"] as? String
                 )
-                // If Firestore has a timestamp for `createdAt`, parse it
+                
                 if let ts = data["createdAt"] as? Timestamp {
                     parsed.createdAt = ts.dateValue()
                 }
