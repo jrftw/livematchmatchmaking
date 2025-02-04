@@ -1,12 +1,5 @@
-// MARK: PlatformDetailView.swift
-
-//
-//  PlatformDetailView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Allows selecting "Creator vs Creator" or bracket setups for a given platform.
-//
+// FILE: PlatformDetailView.swift
+// UPDATED FILE
 
 import SwiftUI
 
@@ -24,24 +17,35 @@ public struct PlatformDetailView: View {
                 NavigationLink("Creator vs Creator") {
                     CreatorVsCreatorView(platform: platform)
                 }
+                // Change this to the new FillInBracketFinderView,
+                // so users can discover existing brackets/slots.
                 NavigationLink("Find slots to fill") {
-                    FillInBracketCreationView(
-                        title: "Fill Slots for \(platform.name)",
+                    FillInBracketFinderView()
+                }
+            }
+            Section(header: Text("Build Brackets")) {
+                NavigationLink("CN Internal Bracket") {
+                    AdvancedBracketCreationView(
+                        title: "CN Internal Bracket",
                         platform: platform
                     )
                 }
-            }
-            Section(header: Text("Bracket Options")) {
-                NavigationLink("CN Internal Bracket",
-                               destination: AdvancedBracketCreationView(title: "CN Internal Bracket", platform: platform))
-                NavigationLink("Agency Internal Bracket",
-                               destination: AdvancedBracketCreationView(title: "Agency Internal Bracket", platform: platform))
-                NavigationLink("Open Bracket",
-                               destination: AdvancedBracketCreationView(title: "Open Bracket", platform: platform))
-                
-                NavigationLink("Build a Fill in Bracket") {
+                NavigationLink("Agency Internal Bracket") {
+                    AdvancedBracketCreationView(
+                        title: "Agency Internal Bracket",
+                        platform: platform
+                    )
+                }
+                NavigationLink("Open Bracket") {
+                    AdvancedBracketCreationView(
+                        title: "Open Bracket",
+                        platform: platform
+                    )
+                }
+                // Keep "Build a Fill in Bracket" pointing to creation logic.
+                NavigationLink("Fill In Brackets") {
                     FillInBracketCreationView(
-                        title: "Fill-In Bracket",
+                        title: "Fill-In Brackets",
                         platform: platform
                     )
                 }

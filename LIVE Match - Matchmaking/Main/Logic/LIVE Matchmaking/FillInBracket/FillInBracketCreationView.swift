@@ -1,15 +1,11 @@
-// MARK: FillInBracketCreationView.swift
-
-//
-//  FillInBracketCreationView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//
+// FILE: FillInBracketCreationView.swift
+// UPDATED FILE
 
 import SwiftUI
 import UniformTypeIdentifiers
 import Foundation
+import FirebaseAuth
+import FirebaseFirestore
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct FillInBracketCreationView: View {
@@ -25,10 +21,15 @@ public struct FillInBracketCreationView: View {
     @State private var exportURL: URL? = nil
     
     @State private var showingImporter = false
-    
     @State private var showingTemplateOptions = false
     @State private var templateURL: URL? = nil
     @State private var showingTemplateExporter = false
+    
+    // Controls bracket visibility (Public or Private)
+    @State private var isPublic = true
+    
+    // Navigates back to "My Brackets" after save
+    @State private var shouldGoToMyBrackets = false
     
     @Environment(\.openURL) private var openURL
     
@@ -43,123 +44,209 @@ public struct FillInBracketCreationView: View {
     }
     
     public var body: some View {
-        Form {
-            Section(header: Text("Bracket Info")) {
-                TextField("Bracket Name", text: $bracketName)
-                Text("Platform: \(platform.name)")
-            }
-            Section(header: Text("Slots to Fill")) {
-                if slots.isEmpty {
-                    Text("No slots added yet.")
-                        .foregroundColor(.secondary)
-                } else {
-                    ForEach(slots) { slot in
-                        NavigationLink {
-                            FillInBracketSlotEditView(
-                                slot: slot,
-                                onSave: { updated in
-                                    if let idx = slots.firstIndex(where: { $0.id == updated.id }) {
-                                        slots[idx] = updated
+        NavigationView {
+            Form {
+                // MARK: Bracket Info
+                Section(header: Text("Bracket Info")) {
+                    TextField("Bracket Name", text: $bracketName)
+                    Text("Platform: \(platform.name)")
+                    Toggle("Public (Visible to Everyone)", isOn: $isPublic)
+                }
+                
+                // MARK: Slots to Fill
+                Section(header: Text("Slots to Fill")) {
+                    if slots.isEmpty {
+                        Text("No slots added yet.")
+                            .foregroundColor(.secondary)
+                    } else {
+                        ForEach(slots) { slot in
+                            NavigationLink {
+                                FillInBracketSlotEditView(
+                                    slot: slot,
+                                    onSave: { updated in
+                                        if let idx = slots.firstIndex(where: { $0.id == updated.id }) {
+                                            slots[idx] = updated
+                                        }
                                     }
+                                )
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("\(slot.creator1.isEmpty ? "?" : slot.creator1) vs \(slot.creator2.isEmpty ? "?" : slot.creator2)")
+                                        .font(.headline)
+                                    Text("Date: \(formatDateTime(slot.startDateTime))")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Text("Status: \(slot.status.rawValue)")
+                                        .font(.subheadline)
+                                        .foregroundColor(colorForStatus(slot.status))
                                 }
-                            )
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("\(slot.creator1.isEmpty ? "?" : slot.creator1) vs \(slot.creator2.isEmpty ? "?" : slot.creator2)")
-                                    .font(.headline)
-                                Text("Date: \(formatDateTime(slot.startDateTime))")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Text("Status: \(slot.status.rawValue)")
-                                    .font(.subheadline)
-                                    .foregroundColor(colorForStatus(slot.status))
                             }
                         }
+                        .onDelete { idxSet in
+                            slots.remove(atOffsets: idxSet)
+                        }
                     }
-                    .onDelete { idxSet in
-                        slots.remove(atOffsets: idxSet)
+                    Button("Add New Slot") {
+                        showingNewSlotSheet = true
                     }
-                }
-                Button("Add New Slot") {
-                    showingNewSlotSheet = true
-                }
-            }
-            Section(header: Text("Import / Export")) {
-                Button("Export to CSV") {
-                    handleExportCSV()
-                }
-                .disabled(slots.isEmpty)
-                
-                Button("Import CSV / Excel / Sheets") {
-                    showingImporter = true
                 }
                 
-                Button("Download Templates") {
-                    showingTemplateOptions = true
+                // MARK: Import / Export
+                Section(header: Text("Import / Export")) {
+                    Button("Export to CSV") {
+                        handleExportCSV()
+                    }
+                    .disabled(slots.isEmpty)
+                    
+                    Button("Import CSV / Excel / Sheets") {
+                        showingImporter = true
+                    }
+                    
+                    Button("Download Templates") {
+                        showingTemplateOptions = true
+                    }
+                }
+                
+                // MARK: Save Bracket
+                Section {
+                    Button("Save Bracket") {
+                        saveBracket()
+                    }
                 }
             }
-            Section {
-                Button("Save Bracket") {
-                    saveBracket()
+            .navigationTitle(title)
+            .sheet(isPresented: $showingNewSlotSheet) {
+                FillInBracketSlotEditView(
+                    slot: FillInBracketSlot(),
+                    onSave: { newSlot in
+                        slots.append(newSlot)
+                        showingNewSlotSheet = false
+                    },
+                    onCancel: {
+                        showingNewSlotSheet = false
+                    }
+                )
+            }
+            .sheet(isPresented: $showingExporter) {
+                if let url = exportURL {
+                    FillInSharesheetActivityView(activityItems: [url])
+                } else {
+                    Text("Export error: no URL generated.")
                 }
             }
-        }
-        .navigationTitle(title)
-        .sheet(isPresented: $showingNewSlotSheet) {
-            FillInBracketSlotEditView(
-                slot: FillInBracketSlot(),
-                onSave: { newSlot in
-                    slots.append(newSlot)
-                    showingNewSlotSheet = false
-                },
-                onCancel: {
-                    showingNewSlotSheet = false
+            .fileImporter(
+                isPresented: $showingImporter,
+                allowedContentTypes: [.commaSeparatedText, .data, .plainText, .spreadsheet],
+                allowsMultipleSelection: false
+            ) { result in
+                handleImportResult(result)
+            }
+            .confirmationDialog("Download Which Template?",
+                                isPresented: $showingTemplateOptions,
+                                titleVisibility: .visible) {
+                Button("CSV Template") {
+                    downloadCSVTemplate()
                 }
+                Button("Excel Template") {
+                    downloadExcelTemplate()
+                }
+                Button("Google Sheets Template") {
+                    openGoogleSheetsTemplate()
+                }
+                Button("Cancel", role: .cancel) { }
+            }
+            .sheet(isPresented: $showingTemplateExporter) {
+                if let url = templateURL {
+                    FillInSharesheetActivityView(activityItems: [url])
+                } else {
+                    Text("Template file generation error.")
+                }
+            }
+            .background(
+                // Hidden NavigationLink to jump to "MyBracketsListView" after saving
+                NavigationLink(
+                    destination: MyBracketsListView().navigationBarTitle("My Brackets"),
+                    isActive: $shouldGoToMyBrackets
+                ) {
+                    EmptyView()
+                }
+                .hidden()
             )
-        }
-        .sheet(isPresented: $showingExporter) {
-            if let url = exportURL {
-                FillInSharesheetActivityView(activityItems: [url])
-            } else {
-                Text("Export error: no URL generated.")
+            .onAppear {
+                // Load data if editing an existing doc
+                if let doc = existingDoc {
+                    bracketName = doc.bracketName
+                    slots = doc.slots
+                    isPublic = doc.isPublic
+                }
             }
         }
-        .fileImporter(
-            isPresented: $showingImporter,
-            allowedContentTypes: [.commaSeparatedText, .data, .plainText, .spreadsheet],
-            allowsMultipleSelection: false
-        ) { result in
-            handleImportResult(result)
+        #if os(iOS) || os(visionOS)
+        .navigationViewStyle(StackNavigationViewStyle())
+        #endif
+    }
+    
+    // MARK: Save Bracket
+    private func saveBracket() {
+        print("Saving bracket '\(bracketName)' with \(slots.count) slots.")
+        
+        guard let user = Auth.auth().currentUser else {
+            print("User must be logged in to save bracket.")
+            return
         }
-        .confirmationDialog("Download Which Template?",
-                            isPresented: $showingTemplateOptions,
-                            titleVisibility: .visible) {
-            Button("CSV Template") {
-                downloadCSVTemplate()
+        
+        let db = FirebaseManager.shared.db
+        
+        if let existing = existingDoc, let docID = existing.id {
+            // Update existing doc
+            let ref = db.collection("fillInBrackets").document(docID)
+            let updated = FillInBracketDoc(
+                id: docID,
+                bracketName: bracketName,
+                platformName: platform.name,
+                slots: slots,
+                createdByUserID: existing.createdByUserID,
+                createdAt: existing.createdAt,
+                isPublic: isPublic
+            )
+            do {
+                try ref.setData(from: updated) { err in
+                    if let err = err {
+                        print("Error updating bracket: \(err.localizedDescription)")
+                    } else {
+                        print("Bracket updated successfully.")
+                        shouldGoToMyBrackets = true
+                    }
+                }
+            } catch {
+                print("Error encoding updated bracket: \(error.localizedDescription)")
             }
-            Button("Excel Template") {
-                downloadExcelTemplate()
-            }
-            Button("Google Sheets Template") {
-                openGoogleSheetsTemplate()
-            }
-            Button("Cancel", role: .cancel) { }
-        }
-        .sheet(isPresented: $showingTemplateExporter) {
-            if let url = templateURL {
-                FillInSharesheetActivityView(activityItems: [url])
-            } else {
-                Text("Template file generation error.")
-            }
-        }
-        .onAppear {
-            if let doc = existingDoc {
-                bracketName = doc.bracketName
-                slots = doc.slots
+        } else {
+            // Create a new doc
+            let newDoc = FillInBracketDoc(
+                bracketName: bracketName,
+                platformName: platform.name,
+                slots: slots,
+                createdByUserID: user.uid,
+                createdAt: Date(),
+                isPublic: isPublic
+            )
+            do {
+                _ = try db.collection("fillInBrackets").addDocument(from: newDoc) { err in
+                    if let err = err {
+                        print("Error creating bracket: \(err.localizedDescription)")
+                    } else {
+                        print("Bracket created successfully.")
+                        shouldGoToMyBrackets = true
+                    }
+                }
+            } catch {
+                print("Error encoding new bracket: \(error.localizedDescription)")
             }
         }
     }
     
+    // MARK: Export CSV
     private func handleExportCSV() {
         let csvText = buildCSV(from: slots)
         let filename = "\(bracketName.isEmpty ? "Bracket" : bracketName)_Export.csv"
@@ -173,6 +260,7 @@ public struct FillInBracketCreationView: View {
         }
     }
     
+    // MARK: CSV Utilities
     private func buildCSV(from slots: [FillInBracketSlot]) -> String {
         var lines: [String] = []
         lines.append("Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Creator2,Net/Agency2,Cat2,Diamond2,Status,Notes,Link")
@@ -205,6 +293,15 @@ public struct FillInBracketCreationView: View {
         return lines.joined(separator: "\n")
     }
     
+    private func cleanForCSV(_ val: String) -> String {
+        if val.contains(",") || val.contains("\"") {
+            let escaped = val.replacingOccurrences(of: "\"", with: "\"\"")
+            return "\"\(escaped)\""
+        }
+        return val
+    }
+    
+    // MARK: Import Helpers
     private func handleImportResult(_ result: Result<[URL], Error>) {
         switch result {
         case .failure(let err):
@@ -281,6 +378,7 @@ public struct FillInBracketCreationView: View {
         }
     }
     
+    // MARK: Template Downloads
     private func downloadCSVTemplate() {
         let lines = [
             "Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Creator2,Net/Agency2,Cat2,Diamond2,Status,Notes,Link",
@@ -320,10 +418,7 @@ public struct FillInBracketCreationView: View {
         openURL(link)
     }
     
-    private func saveBracket() {
-        print("Saving bracket '\(bracketName)' with \(slots.count) slots.")
-    }
-    
+    // MARK: Formatting Helpers
     private func formatDateTime(_ date: Date) -> String {
         let df = DateFormatter()
         df.dateStyle = .medium
@@ -345,14 +440,6 @@ public struct FillInBracketCreationView: View {
         df.dateStyle = .short
         df.timeStyle = .none
         return df.string(from: date)
-    }
-    
-    private func cleanForCSV(_ val: String) -> String {
-        if val.contains(",") || val.contains("\"") {
-            let escaped = val.replacingOccurrences(of: "\"", with: "\"\"")
-            return "\"\(escaped)\""
-        }
-        return val
     }
     
     private func colorForStatus(_ st: MatchStatus) -> Color {

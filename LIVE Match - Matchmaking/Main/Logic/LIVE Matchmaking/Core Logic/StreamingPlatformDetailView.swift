@@ -1,12 +1,5 @@
-// MARK: StreamingPlatformDetailView.swift
-
-//
-//  StreamingPlatformDetailView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Presents “Creator vs Creator” + “Find slots to fill” under “Find Match,” plus bracket creation.
-//
+// FILE: StreamingPlatformDetailView.swift
+// UPDATED FILE
 
 import SwiftUI
 
@@ -24,14 +17,12 @@ public struct StreamingPlatformDetailView: View {
                 NavigationLink("Creator vs Creator") {
                     CreatorVsCreatorView(platform: platform)
                 }
+                // Same change: "Find slots to fill" => FillInBracketFinderView
                 NavigationLink("Find slots to fill") {
-                    FillInBracketCreationView(
-                        title: "Fill Slots for \(platform.name)",
-                        platform: platform
-                    )
+                    FillInBracketFinderView()
                 }
             }
-            Section(header: Text("Bracket Options")) {
+            Section(header: Text("Build Brackets")) {
                 NavigationLink("CN Internal Bracket") {
                     AdvancedBracketCreationView(
                         title: "CN Internal Bracket",
@@ -44,13 +35,14 @@ public struct StreamingPlatformDetailView: View {
                         platform: platform
                     )
                 }
-                NavigationLink("Open Bracket") {
+                NavigationLink("Open Brackets") {
                     AdvancedBracketCreationView(
-                        title: "Open Bracket",
+                        title: "Open Brackets",
                         platform: platform
                     )
                 }
-                NavigationLink("Build a Fill In Bracket") {
+                // Keep building new brackets
+                NavigationLink("Fill In Brackets") {
                     FillInBracketCreationView(
                         title: "Fill-In Bracket",
                         platform: platform

@@ -19,7 +19,7 @@ public enum MatchTimeOption: String, CaseIterable {
 public enum MatchTypeOption: String, CaseIterable {
     case oneAndDone = "One & Done"
     case bestOfThree = "Best of 3"
-    case marathon = "Marathon"
+    case bestOfFive = "Best of 5"
 }
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)

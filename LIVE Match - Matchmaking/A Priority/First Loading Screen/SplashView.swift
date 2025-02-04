@@ -2,7 +2,7 @@
 //  SplashView.swift
 //  LIVE Match - Matchmaking
 //
-//  iOS 15.6+, macOS 11.5, visionOS 2.0+
+//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
 //  Displays a modern splash screen, then transitions to ContentView after a short delay.
 //
 
@@ -42,6 +42,8 @@ struct SplashView: View {
                 
                 VStack(spacing: 20) {
                     let _ = print("[SplashView] Adding splash icon and text labels.")
+                    
+                    // Make sure this exact name matches your asset catalog entry
                     Image("LIVEMatchmakericon")
                         .resizable()
                         .scaledToFit()

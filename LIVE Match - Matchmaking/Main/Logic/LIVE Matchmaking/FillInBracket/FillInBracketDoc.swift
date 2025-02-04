@@ -1,17 +1,9 @@
-//
-//  FillInBracketDoc.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 1/31/25.
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Firestore model for a “Fill-In Bracket” document.
-//
+// FILE: FillInBracketDoc.swift
+// UPDATED FILE
 
 import SwiftUI
 import FirebaseFirestore
 
-// MARK: - FillInBracketDoc
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct FillInBracketDoc: Identifiable, Codable {
     @DocumentID public var id: String?
@@ -21,13 +13,17 @@ public struct FillInBracketDoc: Identifiable, Codable {
     public var createdByUserID: String?
     public var createdAt: Date
     
+    // NEW: Whether this bracket is visible to everyone (public) or restricted
+    public var isPublic: Bool
+    
     public init(
         id: String? = nil,
         bracketName: String,
         platformName: String,
         slots: [FillInBracketSlot],
         createdByUserID: String? = nil,
-        createdAt: Date
+        createdAt: Date,
+        isPublic: Bool = true
     ) {
         self.id = id
         self.bracketName = bracketName
@@ -35,17 +31,6 @@ public struct FillInBracketDoc: Identifiable, Codable {
         self.slots = slots
         self.createdByUserID = createdByUserID
         self.createdAt = createdAt
+        self.isPublic = isPublic
     }
 }
-
-/*
- // MARK: - (Deprecated duplicate, commented out to avoid conflicts)
- // The advanced FillInBracketSlot is defined in FillInBracketSlot.swift
- //public struct FillInBracketSlot: Identifiable, Codable {
- //    public var id: String = UUID().uuidString
- //    public var name: String
- //    public init(name: String) {
- //        self.name = name
- //    }
- //}
-*/

@@ -1,52 +1,87 @@
-// MARK: File 22: TournamentAppApp.swift
-// iOS 15.6+
-// Only for iOS, we configure AdMob on launch. Not for macOS/visionOS.
+//
+//  LIVE_Match___MatchmakingApp.swift
+//  LIVE Match - Matchmaking
+//
+//  iOS 15.6+
+//  The single "main" entry for your SwiftUI app, including the AppDelegate for iOS tasks.
+//
 
 import SwiftUI
 import Firebase
-import FirebaseAppCheck // Make sure to import this
-#if canImport(UIKit)
-import GoogleMobileAds
-#endif
+import FirebaseAppCheck
 
 @main
-@available(iOS 15.6, *)
-struct TournamentAppApp: App {
+struct LIVE_Match___MatchmakingApp: App {
+    // MARK: - AppDelegate for iOS Lifecycle
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     // MARK: - Init
     init() {
-        print("[TournamentAppApp] init started.")
-        
-        // 1. Configure Firebase
-        FirebaseApp.configure()
-        print("[TournamentAppApp] FirebaseApp.configure() called.")
-        
-        // 2. Enable Debug provider for App Check (Simulator usage)
-        #if canImport(UIKit)
-        let providerFactory = AppCheckDebugProviderFactory()
-        AppCheck.setAppCheckProviderFactory(providerFactory)
-        print("[TournamentAppApp] AppCheckDebugProviderFactory set for simulator testing.")
-        #endif
-        
-        // 3. Configure AdMob if on iOS
-        #if canImport(UIKit)
-        AdManager.shared.configureAdMob()
-        print("[TournamentAppApp] AdManager.shared.configureAdMob() called.")
-        #endif
-        
-        print("[TournamentAppApp] init completed.")
+        print("[LIVE_Match___MatchmakingApp] init started.")
+        // Any additional SwiftUI-level initialization can happen here.
+        print("[LIVE_Match___MatchmakingApp] init completed.")
     }
-    
+
     // MARK: - Body
     var body: some Scene {
         WindowGroup {
-            let _ = print("[TournamentAppApp] SplashView will be displayed in the WindowGroup.")
-            SplashView()
+            SplashView()  // Your main SwiftUI entry view.
         }
-        #if os(macOS)
-        Settings {
-            let _ = print("[TournamentAppApp] On macOS, providing Settings scene with SettingsView.")
-            SettingsView()
-        }
+    }
+}
+
+// MARK: - AppDelegate
+class AppDelegate: NSObject, UIApplicationDelegate {
+    
+    // Called on app startup
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        print("[AppDelegate] didFinishLaunchingWithOptions called.")
+        
+        // 1. Configure Firebase
+        FirebaseApp.configure()
+        print("[AppDelegate] FirebaseApp.configure() done.")
+        
+        // 2. App Check Debug Provider for Simulator
+        #if targetEnvironment(simulator)
+        let providerFactory = AppCheckDebugProviderFactory()
+        AppCheck.setAppCheckProviderFactory(providerFactory)
+        
+        // Optionally enable auto-refresh for debug tokens
+        AppCheck.appCheck().isTokenAutoRefreshEnabled = true
+        
+        print("[AppDelegate] AppCheckDebugProviderFactory set for simulator + autoRefresh enabled.")
         #endif
+        
+        // 3. Additional setup if needed (e.g., Crashlytics, Analytics):
+        //    Crashlytics.crashlytics()...
+        //    Analytics.logEvent(...)
+
+        // 4. Configure AdMob (for iOS)
+        #if canImport(UIKit)
+        AdManager.shared.configureAdMob()
+        print("[AppDelegate] AdManager.shared.configureAdMob() called.")
+        #endif
+        
+        return true
+    }
+    
+    // MARK: - Push Notifications (Optional)
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        print("[AppDelegate] Registered for remote notifications.")
+        // If using Firebase Cloud Messaging:
+        // Messaging.messaging().apnsToken = deviceToken
+    }
+    
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        print("[AppDelegate] Failed to register for remote notifications: \(error.localizedDescription)")
     }
 }

@@ -1,30 +1,22 @@
-//
-//  MainMenuView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5, visionOS 2.0+
-//
-//  Default order with booleans controlling each item’s inclusion.
-//  - Items #1–6 also hide if not logged in.
-//  - Item #7 hides if logged in.
-//  - Items #8–9 visible to everyone if their booleans are true.
-//
+// FILE: MainMenuView.swift
 
 import SwiftUI
 import FirebaseAuth
 
+// MARK: - MainMenuView
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct MainMenuView: View {
-    // MARK: - ObservedObject
+    // MARK: Properties
     @ObservedObject private var authManager = AuthManager.shared
+    @StateObject private var achievementsManager = AchievementsManager()
     
-    // Binding to track which main screen is selected
     @Binding var selectedScreen: MainScreen
     
-    // MARK: - Boolean Toggles (turn each page on/off in code)
     private let showLiveMatchmaking      = true
-    private let showGameMatchmaking      = true
+    private let showGameMatchmaking      = false
     private let showTournaments          = false
+    private let showNews                 = true
+    private let showMyEvents             = true
     private let showAchievements         = true
     private let showLeaderboards         = true
     private let showAgencyCNReview       = false
@@ -32,16 +24,15 @@ public struct MainMenuView: View {
     private let showHelp                 = true
     private let showSettings             = true
     
-    // MARK: - State
     @StateObject private var reorderManager = ReorderManager()
     @State private var isEditingLayout = false
     
-    // MARK: - Init
+    // MARK: Init
     public init(selectedScreen: Binding<MainScreen>) {
         self._selectedScreen = selectedScreen
     }
     
-    // MARK: - Body
+    // MARK: Body
     public var body: some View {
         ZStack {
             LinearGradient(
@@ -115,22 +106,17 @@ public struct MainMenuView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            // Build the full list in default order, then filter based on login.
             let defaultItems = allMenuItems()
             let final = filterMenuItems(defaultItems)
-            
             reorderManager.loadItems(with: final)
         }
     }
     
-    // MARK: - Default Ordered Items
-    ///
-    /// We only add the item if the corresponding boolean is true.
-    /// Then we apply login-based hiding in filterMenuItems().
+    // MARK: Menu Items
     private func allMenuItems() -> [MenuItem] {
         var items = [MenuItem]()
         
-        // 1. LIVE Matchmaking (logged in only)
+        // 1. LIVE Matchmaking
         if showLiveMatchmaking {
             items.append(MenuItem(
                 title: "LIVE Matchmaking",
@@ -140,7 +126,7 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 2. Game Matchmaking (logged in only)
+        // 2. Game Matchmaking
         if showGameMatchmaking {
             items.append(MenuItem(
                 title: "Game Matchmaking",
@@ -150,7 +136,7 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 3. Tournaments (logged in only)
+        // 3. Tournaments
         if showTournaments {
             items.append(MenuItem(
                 title: "Tournaments",
@@ -160,27 +146,37 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 4. Achievements (logged in only)
+        // 4. My Events
+        if showMyEvents {
+            items.append(MenuItem(
+                title: "My Events",
+                icon: "calendar",
+                color: .red,
+                destination: AnyView(MyEventsView())
+            ))
+        }
+        
+        // 5. Achievements
         if showAchievements {
             items.append(MenuItem(
                 title: "Achievements",
                 icon: "star.fill",
                 color: .yellow,
-                destination: AnyView(AchievementsView())
+                destination: AnyView(AchievementsView(manager: achievementsManager))
             ))
         }
         
-        // 5. Leaderboards (logged in only)
+        // 6. Leaderboards
         if showLeaderboards {
             items.append(MenuItem(
                 title: "Leaderboards",
                 icon: "list.number",
                 color: .orange,
-                destination: AnyView(LeaderboardsView())
+                destination: AnyView(LeaderboardsView(manager: achievementsManager))
             ))
         }
         
-        // 6. Agency / Creator Network Review (logged in only)
+        // 7. Agency / Creator Network Review
         if showAgencyCNReview {
             items.append(MenuItem(
                 title: "Agency / Creator Network Review",
@@ -190,7 +186,7 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 7. Create Account or Log In (not logged in only)
+        // 8. Create Account or Log In
         if showCreateAccountOrLogin {
             items.append(MenuItem(
                 title: "Create Account or Log In",
@@ -200,7 +196,17 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 8. Help (everyone)
+        // 9. News
+        if showNews {
+            items.append(MenuItem(
+                title: "News",
+                icon: "newspaper",
+                color: .mint,
+                destination: AnyView(NewsView())
+            ))
+        }
+        
+        // 10. Help
         if showHelp {
             items.append(MenuItem(
                 title: "Help",
@@ -210,7 +216,7 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 9. Settings (everyone)
+        // 11. Settings
         if showSettings {
             items.append(MenuItem(
                 title: "Settings",
@@ -223,36 +229,28 @@ public struct MainMenuView: View {
         return items
     }
     
-    // MARK: - Filter Items Based on Login State
-    ///
-    /// After building the default array (minus booleans that are off),
-    /// we further hide #1–6 if not logged in, hide #7 if logged in.
-    ///
+    // MARK: Filter Items
     private func filterMenuItems(_ items: [MenuItem]) -> [MenuItem] {
         var newItems = items
-        
         let isLoggedIn = (authManager.user != nil && !authManager.isGuest)
         
         for i in newItems.indices {
             let title = newItems[i].title
-            
             switch title {
             case "LIVE Matchmaking",
                  "Game Matchmaking",
                  "Tournaments",
+                 "My Events",
                  "Achievements",
                  "Leaderboards",
                  "Agency / Creator Network Review":
-                // Hide if not logged in
                 if !isLoggedIn {
                     newItems[i].isHidden = true
                 }
             case "Create Account or Log In":
-                // Hide if logged in
                 if isLoggedIn {
                     newItems[i].isHidden = true
                 }
-            // "Help" / "Settings" => do nothing
             default:
                 break
             }

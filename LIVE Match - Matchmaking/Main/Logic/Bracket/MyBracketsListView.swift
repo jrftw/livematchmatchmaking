@@ -1,17 +1,8 @@
-//
-//  MyBracketsListView.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 1/28/25.
-//
-
-// MARK: File: MyBracketsListView.swift
-// MARK: iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// FILE: MyBracketsListView.swift
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
 // Displays all brackets created by the current user, allowing edit/duplicate/delete.
 
 import SwiftUI
-import FirebaseFirestore
-import FirebaseAuth
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 struct MyBracketsListView: View {
@@ -25,7 +16,7 @@ struct MyBracketsListView: View {
             } else {
                 ForEach(vm.brackets) { bracket in
                     NavigationLink(destination: MyBracketDetailView(bracket: bracket)) {
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text(bracket.bracketName)
                                 .font(.headline)
                             Text("Platform: \(bracket.platform)")

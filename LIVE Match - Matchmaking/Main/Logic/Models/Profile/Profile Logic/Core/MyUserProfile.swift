@@ -1,10 +1,11 @@
 // MARK: MyUserProfile.swift
+// Single model used across sign-up and profile screens.
 
 import SwiftUI
 import FirebaseFirestore
 
 public struct MyUserProfile: Codable, Identifiable {
-    public var id: String?
+    @DocumentID public var id: String? // Use @DocumentID for easier Firestore reads
     
     public var firstName: String
     public var lastName: String
@@ -36,9 +37,9 @@ public struct MyUserProfile: Codable, Identifiable {
     public var wins: Int
     public var losses: Int
     
-    // New field for location
     public var location: String?
     
+    // Use a single, consistent init so all code references MyUserProfile
     public init(
         id: String? = nil,
         firstName: String,
@@ -54,11 +55,11 @@ public struct MyUserProfile: Codable, Identifiable {
         phonePublicly: Bool = false,
         clanTag: String? = nil,
         clanColorHex: String? = nil,
-        tags: [String],
-        socialLinks: [String: String],
+        tags: [String] = [],
+        socialLinks: [String: String] = [:],
         profilePictureURL: String? = nil,
         bannerURL: String? = nil,
-        createdAt: Date,
+        createdAt: Date = Date(),
         followersCount: Int = 0,
         followingCount: Int = 0,
         wins: Int = 0,

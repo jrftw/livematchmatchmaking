@@ -1,9 +1,5 @@
-// MARK: - MyUserProfileView.swift
-// Cleaned up to display banner and avatar in the center,
-// then clanTag + username, bio, displayName, followers/following,
-// W/L stats, and a single row of buttons.
-// If it’s the current user’s profile, show only “Edit Profile” and “Share”.
-// Otherwise, show “Follow” and “Message” in that row.
+// MARK: MyUserProfileView.swift
+// Uses MyUserProfile to display banner & avatar, stats, etc.
 
 import SwiftUI
 import FirebaseAuth
@@ -17,7 +13,6 @@ public struct MyUserProfileView: View {
     @State private var currentWins: Int
     @State private var currentLosses: Int
     
-    // If you prefer to detect whether it's the current user:
     private var isCurrentUser: Bool {
         guard let currentUID = Auth.auth().currentUser?.uid else { return false }
         return (profile.id == currentUID)
@@ -35,7 +30,7 @@ public struct MyUserProfileView: View {
         ScrollView {
             VStack(spacing: 0) {
                 
-                // MARK: - Banner (Centered)
+                // MARK: - Banner
                 ZStack {
                     if let bannerURL = profile.bannerURL,
                        !bannerURL.isEmpty,
@@ -59,7 +54,7 @@ public struct MyUserProfileView: View {
                 .frame(height: 220)
                 .clipped()
                 
-                // MARK: - Avatar (Centered)
+                // MARK: - Avatar
                 ZStack {
                     Circle().fill(Color.white)
                         .frame(width: 130, height: 130)
@@ -143,10 +138,10 @@ public struct MyUserProfileView: View {
                 buttonRow()
                     .padding(.top, 16)
                 
-                // MARK: - Visibility Toggles, Tags, Social Links, etc.
+                // MARK: - Additional Info
                 extraInfoSection()
                 
-                // MARK: - Example placeholders
+                // MARK: - Placeholders
                 platformTeamsSection()
                 feedSection()
                 
@@ -162,12 +157,13 @@ public struct MyUserProfileView: View {
     }
 }
 
+// MARK: - Logic / UI
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 extension MyUserProfileView {
     
-    // MARK: - W/L Section
+    // MARK: Win / Lose
     private func winLoseSection() -> some View {
-        let ratio = currentLosses == 0
+        let ratio = (currentLosses == 0)
             ? (currentWins > 0 ? "∞" : "0.0")
             : String(format: "%.2f", Double(currentWins) / Double(currentLosses))
         
@@ -179,8 +175,10 @@ extension MyUserProfileView {
                     Text("Wins").font(.subheadline)
                     HStack(spacing: 12) {
                         Button("-") {
-                            if currentWins > 0 { currentWins -= 1 }
-                            updateWinsLosses()
+                            if currentWins > 0 {
+                                currentWins -= 1
+                                updateWinsLosses()
+                            }
                         }
                         Text("\(currentWins)").font(.headline)
                         Button("+") {
@@ -193,8 +191,10 @@ extension MyUserProfileView {
                     Text("Losses").font(.subheadline)
                     HStack(spacing: 12) {
                         Button("-") {
-                            if currentLosses > 0 { currentLosses -= 1 }
-                            updateWinsLosses()
+                            if currentLosses > 0 {
+                                currentLosses -= 1
+                                updateWinsLosses()
+                            }
                         }
                         Text("\(currentLosses)").font(.headline)
                         Button("+") {
@@ -210,7 +210,15 @@ extension MyUserProfileView {
         .padding(.top, 8)
     }
     
-    // MARK: - Button Row
+    private func updateWinsLosses() {
+        guard let uid = profile.id else { return }
+        let docRef = db.collection("users").document(uid)
+        docRef.setData(["wins": currentWins,
+                        "losses": currentLosses],
+                       merge: true)
+    }
+    
+    // MARK: Button Row
     private func buttonRow() -> some View {
         HStack(spacing: 20) {
             if isCurrentUser {
@@ -231,7 +239,6 @@ extension MyUserProfileView {
                 .background(Color.green.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(8)
-                
             } else {
                 Button("Follow") {
                     // follow logic
@@ -250,59 +257,42 @@ extension MyUserProfileView {
                 .background(Color.green.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(8)
-                
-                // If you really want "Edit Profile" + "Share" for everyone,
-                // you can uncomment. But typically, only the owner can edit:
-                // Button("Edit Profile") { ... }
-                // Button("Share") { ... }
             }
         }
     }
     
-    // MARK: - Extra Info Section
+    // MARK: Extra Info
     private func extraInfoSection() -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Birthday
             if profile.birthdayPublicly,
                let bday = profile.birthday,
                !bday.isEmpty {
-                Text("Birthday: \(bday)")
-                    .font(.subheadline)
+                Text("Birthday: \(bday)").font(.subheadline)
             }
-            
-            // Email
             if profile.emailPublicly,
                let em = profile.email,
                !em.isEmpty {
-                Text("Email: \(em)")
-                    .font(.subheadline)
+                Text("Email: \(em)").font(.subheadline)
             }
-            
-            // Phone
             if profile.phonePublicly,
                let ph = profile.phoneNumber,
                !ph.isEmpty {
-                Text("Phone: \(ph)")
-                    .font(.subheadline)
+                Text("Phone: \(ph)").font(.subheadline)
             }
-            
             // Tags
             if !profile.tags.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Tags:")
-                        .font(.headline)
+                    Text("Tags:").font(.headline)
                     Text(profile.tags.joined(separator: ", "))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
                 .padding(.top, 8)
             }
-            
-            // Social Links
+            // Social
             if !profile.socialLinks.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Social Links:")
-                        .font(.headline)
+                    Text("Social Links:").font(.headline)
                     ForEach(Array(profile.socialLinks.keys), id: \.self) { key in
                         if let link = profile.socialLinks[key], !link.isEmpty {
                             Text("\(key): \(link)")
@@ -318,7 +308,7 @@ extension MyUserProfileView {
         .padding(.top, 16)
     }
     
-    // MARK: - Example Platforms / Teams
+    // MARK: Platform Teams
     private func platformTeamsSection() -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Platforms / Agencies / Teams")
@@ -330,7 +320,7 @@ extension MyUserProfileView {
         .padding(.top, 20)
     }
     
-    // MARK: - Example Feed Section
+    // MARK: Feed
     private func feedSection() -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Feed / Tournaments")
@@ -340,47 +330,5 @@ extension MyUserProfileView {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 12)
-    }
-    
-    // MARK: - Firestore Update
-    private func updateWinsLosses() {
-        guard let uid = profile.id else { return }
-        db.collection("users").document(uid).setData([
-            "wins": currentWins,
-            "losses": currentLosses
-        ], merge: true)
-    }
-}
-
-// MARK: - CircleAvatarView
-@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-fileprivate struct CircleAvatarView: View {
-    let picURL: String?
-    
-    var body: some View {
-        ZStack {
-            Circle().fill(Color.gray.opacity(0.3))
-            if let urlStr = picURL,
-               !urlStr.isEmpty,
-               let url = URL(string: urlStr) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        Circle().fill(Color.gray.opacity(0.3))
-                    case .success(let img):
-                        img.resizable().scaledToFill()
-                    case .failure:
-                        Circle().fill(Color.gray.opacity(0.3))
-                    @unknown default:
-                        Circle().fill(Color.gray.opacity(0.3))
-                    }
-                }
-            }
-        }
-        .frame(width: 120, height: 120)
-        .clipShape(Circle())
-        .overlay(
-            Circle().stroke(Color.white, lineWidth: 3)
-        )
     }
 }

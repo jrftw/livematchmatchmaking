@@ -4,19 +4,28 @@
 //
 //  Created by Kevin Doyle Jr. on 1/31/25.
 //
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  A subview for editing one bracket slot.
+// MARK: FillInBracketSlotEditView.swift
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// A subview for editing one bracket slot, loading "knownCreators" from user profiles
+// and "knownAgencies" from the app's agencies/networks in Firestore.
 
 import SwiftUI
 import Foundation
+import FirebaseFirestore
+import FirebaseAuth
 
-// MARK: - FillInBracketSlotEditView
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct FillInBracketSlotEditView: View {
+    // MARK: - State & Props
     @State var slot: FillInBracketSlot
     var onSave: ((FillInBracketSlot) -> Void)?
     var onCancel: (() -> Void)?
     
+    // MARK: - Dynamic Known Lists
+    @State private var knownCreators: [String] = []
+    @State private var knownAgencies: [String] = []
+    
+    // MARK: - Init
     public init(
         slot: FillInBracketSlot,
         onSave: ((FillInBracketSlot) -> Void)? = nil,
@@ -27,25 +36,59 @@ public struct FillInBracketSlotEditView: View {
         self.onCancel = onCancel
     }
     
+    // MARK: - Body
     public var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Date & Time")) {
-                    DatePicker("Select Date/Time", selection: $slot.startDateTime, displayedComponents: [.date, .hourAndMinute])
+                    DatePicker("Select Date/Time",
+                               selection: $slot.startDateTime,
+                               displayedComponents: [.date, .hourAndMinute])
                     timeZoneDisplayRows(for: slot.startDateTime)
                 }
+                
                 Section(header: Text("Creator #1")) {
-                    TextField("Name", text: $slot.creator1)
-                    TextField("Network/Agency (Optional)", text: $slot.creatorNetworkOrAgency1)
+                    Picker("Select from known creators", selection: $slot.creator1) {
+                        Text("Manual Entry").tag("")
+                        ForEach(knownCreators, id: \.self) { creatorName in
+                            Text(creatorName).tag(creatorName)
+                        }
+                    }
+                    TextField("Or manually type a name", text: $slot.creator1)
+                    
+                    Picker("Network/Agency", selection: $slot.creatorNetworkOrAgency1) {
+                        Text("None / Manual Entry").tag("")
+                        ForEach(knownAgencies, id: \.self) { agencyName in
+                            Text(agencyName).tag(agencyName)
+                        }
+                    }
+                    TextField("Or manually type (Optional)", text: $slot.creatorNetworkOrAgency1)
+                    
                     TextField("Category", text: $slot.category1)
                     TextField("Diamond Avg", text: $slot.diamondAvg1)
                 }
+                
                 Section(header: Text("Creator #2")) {
-                    TextField("Name", text: $slot.creator2)
-                    TextField("Network/Agency (Optional)", text: $slot.creatorNetworkOrAgency2)
+                    Picker("Select from known creators", selection: $slot.creator2) {
+                        Text("Manual Entry").tag("")
+                        ForEach(knownCreators, id: \.self) { creatorName in
+                            Text(creatorName).tag(creatorName)
+                        }
+                    }
+                    TextField("Or manually type a name", text: $slot.creator2)
+                    
+                    Picker("Network/Agency", selection: $slot.creatorNetworkOrAgency2) {
+                        Text("None / Manual Entry").tag("")
+                        ForEach(knownAgencies, id: \.self) { agencyName in
+                            Text(agencyName).tag(agencyName)
+                        }
+                    }
+                    TextField("Or manually type (Optional)", text: $slot.creatorNetworkOrAgency2)
+                    
                     TextField("Category", text: $slot.category2)
                     TextField("Diamond Avg", text: $slot.diamondAvg2)
                 }
+                
                 Section(header: Text("Status / Notes")) {
                     Picker("Status", selection: $slot.status) {
                         ForEach(MatchStatus.allCases, id: \.self) { st in
@@ -73,9 +116,59 @@ public struct FillInBracketSlotEditView: View {
         #if os(iOS) || os(visionOS)
         .navigationViewStyle(StackNavigationViewStyle())
         #endif
+        .onAppear {
+            loadKnownCreators()
+            loadKnownAgencies()
+        }
     }
     
-    // MARK: TimeZone Display
+    // MARK: - Load Known Creators
+    private func loadKnownCreators() {
+        let db = Firestore.firestore()
+        db.collection("users").getDocuments { snapshot, error in
+            if let error = error {
+                print("Error loading known creators: \(error.localizedDescription)")
+                return
+            }
+            guard let docs = snapshot?.documents else { return }
+            var fetched: [String] = []
+            for doc in docs {
+                // Replace with your actual user model fields
+                let username = doc.data()["username"] as? String ?? ""
+                if !username.isEmpty {
+                    fetched.append(username)
+                }
+            }
+            DispatchQueue.main.async {
+                self.knownCreators = fetched
+            }
+        }
+    }
+    
+    // MARK: - Load Known Agencies
+    private func loadKnownAgencies() {
+        let db = Firestore.firestore()
+        db.collection("agencies").getDocuments { snapshot, error in
+            if let error = error {
+                print("Error loading known agencies: \(error.localizedDescription)")
+                return
+            }
+            guard let docs = snapshot?.documents else { return }
+            var fetched: [String] = []
+            for doc in docs {
+                // Replace with your actual agency model fields
+                let agencyName = doc.data()["name"] as? String ?? ""
+                if !agencyName.isEmpty {
+                    fetched.append(agencyName)
+                }
+            }
+            DispatchQueue.main.async {
+                self.knownAgencies = fetched
+            }
+        }
+    }
+    
+    // MARK: - TimeZone Display
     @ViewBuilder
     private func timeZoneDisplayRows(for date: Date) -> some View {
         VStack(alignment: .leading, spacing: 6) {

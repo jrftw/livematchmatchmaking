@@ -2,37 +2,35 @@
 //  BannerAdView.swift
 //  LIVE Match - Matchmaking
 //
-//  Created by Kevin Doyle Jr. on 1/28/25.
+//  iOS 15.6+ only
+//  A SwiftUI wrapper around GADBannerView for a bottom banner ad.
 //
 
-// MARK: File: BannerAdView.swift
-// iOS 15.6+ only
-// A SwiftUI wrapper around GADBannerView for a non-intrusive bottom banner ad.
-
-#if canImport(UIKit) // Exclude for macOS/visionOS builds
+#if canImport(UIKit)
 import SwiftUI
 import GoogleMobileAds
 
 @available(iOS 15.6, *)
 struct BannerAdView: UIViewRepresentable {
+    // Replace with your actual banner ID
     let adUnitID = "ca-app-pub-6815311336585204/4056526045"
     
     func makeUIView(context: Context) -> GADBannerView {
-        let banner = GADBannerView(adSize: GADAdSizeBanner)
-        banner.adUnitID = adUnitID
+        let bannerView = GADBannerView(adSize: GADAdSizeBanner)
+        bannerView.adUnitID = adUnitID
         
-        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-            if let root = scene.windows.first?.rootViewController {
-                banner.rootViewController = root
-            }
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = scene.windows.first,
+           let rootVC = window.rootViewController {
+            bannerView.rootViewController = rootVC
         }
         
-        banner.load(GADRequest())
-        return banner
+        bannerView.load(GADRequest())
+        return bannerView
     }
     
     func updateUIView(_ uiView: GADBannerView, context: Context) {
-        // Update as needed, typically not used for banner ads
+        // Typically no update needed for banner ads
     }
 }
 #endif
