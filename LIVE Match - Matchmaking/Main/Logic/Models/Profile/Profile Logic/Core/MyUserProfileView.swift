@@ -10,6 +10,7 @@ public struct MyUserProfileView: View {
     public let profile: MyUserProfile
     
     @State private var showingEditSheet = false
+    @State private var showingManageAccountSheet = false
     @State private var currentWins: Int
     @State private var currentLosses: Int
     
@@ -152,6 +153,9 @@ public struct MyUserProfileView: View {
         .sheet(isPresented: $showingEditSheet) {
             EditProfileView(profile: profile)
         }
+        .sheet(isPresented: $showingManageAccountSheet) {
+            ManageAccountView()
+        }
         .navigationTitle("My Profile")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -228,6 +232,15 @@ extension MyUserProfileView {
                 .font(.headline)
                 .padding()
                 .background(Color.blue.opacity(0.8))
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                
+                Button("Manage Account") {
+                    showingManageAccountSheet = true
+                }
+                .font(.headline)
+                .padding()
+                .background(Color.orange.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(8)
                 
