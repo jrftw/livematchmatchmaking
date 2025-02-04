@@ -1,17 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
  Info.plist
- Fully configured for:
-   • Firebase
-   • AdMob
-   • SKAdNetwork (for ad tracking)
-   • Background modes (remote-notification, processing, location, fetch)
-   • BGTaskSchedulerPermittedIdentifiers
-   • Location usage descriptions
+ Fully configured and descriptive for LIVE Match - Matchmaking app.
+ 
+ Includes:
+  • Core metadata (Bundle ID, version, etc.)
+  • Firebase configuration
+  • AdMob & SKAdNetwork settings
+  • Background modes
+  • BGTaskScheduler IDs
+  • Location usage descriptions
+  • App Tracking Transparency (ATT) usage description
 -->
+
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- MARK: App Core Metadata -->
+    <key>CFBundleIdentifier</key>
+    <string>Infinitum-Imagery-LLC.LIVE-Match---Matchmaking</string>
+    
+    <key>CFBundleName</key>
+    <string>LIVE Match - Matchmaking</string>
+    
+    <key>CFBundleDisplayName</key>
+    <string>LIVE Match</string>
+    
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    
+    <key>CFBundleVersion</key>
+    <string>6</string>
+    
     <!-- MARK: Firebase Settings -->
     <key>FirebaseAppDelegateProxyEnabled</key>
     <true/>
@@ -64,9 +84,9 @@
     <!-- MARK: Background Modes -->
     <key>UIBackgroundModes</key>
     <array>
-        <!-- App supports push notifications in background -->
+        <!-- Allows push notifications in the background -->
         <string>remote-notification</string>
-        <!-- Required for BGTaskScheduler background tasks -->
+        <!-- Allows BGTaskScheduler background tasks -->
         <string>processing</string>
         <!-- Allows location-based updates in background -->
         <string>location</string>
@@ -74,32 +94,27 @@
         <string>fetch</string>
     </array>
     
-    <!-- MARK: BGTask Scheduler Identifiers
-         These must match the identifiers used in your code for:
-         BGTaskScheduler.shared.register(forTaskWithIdentifier: ...)
-         and BGTaskScheduler.shared.submit(...)
-    -->
+    <!-- MARK: BGTask Scheduler Identifiers -->
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
-        <!-- Replace these example identifiers with your real ones -->
+        <!-- Replace these with your real background task identifiers -->
         <string>com.yourcompany.yourapp.refresh</string>
         <string>com.yourcompany.yourapp.processing</string>
     </array>
     
-    <!-- MARK: Location Usage Descriptions (iOS 13+ / iOS 14+ etc.)
-         Adjust text as needed for your app’s explanation to users.
-    -->
-    
-    <!-- Always + When In Use (if applicable) -->
+    <!-- MARK: Location Usage Descriptions -->
+    <!-- Provide explanations for why the app uses location services. -->
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>This app needs your location to provide location-based alerts and services, even in the background.</string>
+    <string>This app needs your location at all times to detect your time zone for bracket scheduling, even in the background.</string>
     
-    <!-- When In Use -->
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This app uses your location to provide relevant features only while the app is in use.</string>
+    <string>This app uses your location to detect your current time zone for brackets while the app is open.</string>
     
-    <!-- If you also require Always usage in iOS 12 or earlier: -->
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>This app needs your location at all times for certain continuous features.</string>
+    <string>This app needs your location at all times to ensure accurate bracket times, location-based matchmaking, and continuous alerts.</string>
+    
+    <!-- MARK: App Tracking Transparency (ATT) -->
+    <key>NSUserTrackingUsageDescription</key>
+    <string>We use your device’s advertising identifier to personalize ads and measure campaign effectiveness. Your permission helps us deliver a better user experience.</string>
 </dict>
 </plist>

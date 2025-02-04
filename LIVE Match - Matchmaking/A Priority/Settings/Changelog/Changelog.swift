@@ -77,6 +77,19 @@ public struct Changelog {
                 "Upgraded server handling for scheduling and bracket updates to reduce wait times.",
                 "Further optimized overall memory usage, ensuring smoother performance on all devices."
             ]
+        ),
+        // MARK: Added entry for Build 6
+        ChangelogEntry(
+            version: "1.0",
+            build: "6",
+            releaseDate: "2/4/25",
+            changes: [
+                "Introduced personalized match reminders, letting players opt in to receive push notifications when a match or bracket is about to begin.",
+                "Improved bracket analytics to show participant progress graphs in real time.",
+                "Refined the in-app messaging design with more responsive group chat layouts and new emoji support.",
+                "Revamped location services to accurately detect user time zones without requiring continuous background access.",
+                "Added offline mode for bracket browsing, allowing participants to view schedules and statuses even without a network connection."
+            ]
         )
     ]
 }
