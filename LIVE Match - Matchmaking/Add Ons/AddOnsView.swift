@@ -1,69 +1,50 @@
-//
-//  AddOnsView.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 1/31/25.
-//
-//
-//  AddOnsView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5, visionOS 2.0+
-//  Lists available add-ons (in-app purchases). For demonstration,
-//  we have a subscription "Remove Ads" at $4.99/month. Includes
-//  placeholders for "Subscribe" and "Restore Purchase" logic.
-//
-
+// MARK: - AddOnsView.swift
 import SwiftUI
-import StoreKit  // or a custom IAP manager if you prefer
+import StoreKit
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct AddOnsView: View {
-    // MARK: - State
-    @State private var isPurchasing = false
+    @State private var isPurchasingRemoveAds = false
+    @State private var isPurchasingTemplates = false
     @State private var purchaseStatusMessage = ""
     
-    // MARK: - Init
-    public init() {
-        print("[AddOnsView] init called.")
-        print("[AddOnsView] Initial isPurchasing: \(isPurchasing), purchaseStatusMessage: '\(purchaseStatusMessage)'")
-    }
+    public init() {}
     
-    // MARK: - Body
     public var body: some View {
-        let _ = print("[AddOnsView] body invoked. Building List. isPurchasing: \(isPurchasing), purchaseStatusMessage: '\(purchaseStatusMessage)'")
-        
-        return List {
+        List {
             Section(header: Text("Subscriptions")) {
                 removeAdsRow
+                templateSubscriptionRow
             }
             
             Section {
                 Button("Restore Purchases") {
-                    print("[AddOnsView] Restore Purchases button tapped.")
-                    restorePurchases()
+                    Task {
+                        let restored = await StoreKitHelper.shared.restorePurchases()
+                        purchaseStatusMessage = restored
+                        ? "Purchases restored successfully."
+                        : "No previous subscription found or restore failed."
+                    }
                 }
             }
         }
         .navigationTitle("Add-Ons")
         .alert(isPresented: .constant(!purchaseStatusMessage.isEmpty)) {
-            print("[AddOnsView] Alert presented with message: '\(purchaseStatusMessage)'")
-            return Alert(
+            Alert(
                 title: Text("Purchase Info"),
                 message: Text(purchaseStatusMessage),
                 dismissButton: .default(Text("OK")) {
-                    print("[AddOnsView] Alert dismissed. Clearing purchaseStatusMessage.")
                     purchaseStatusMessage = ""
                 }
             )
         }
+        .task {
+            await StoreKitHelper.shared.loadProducts()
+        }
     }
     
-    // MARK: - "Remove Ads" row
     private var removeAdsRow: some View {
-        let _ = print("[AddOnsView] removeAdsRow computed. isPurchasing: \(isPurchasing)")
-        
-        return HStack {
+        HStack {
             VStack(alignment: .leading) {
                 Text("Remove Ads (Monthly)")
                     .font(.headline)
@@ -72,62 +53,46 @@ public struct AddOnsView: View {
                     .foregroundColor(.secondary)
             }
             Spacer()
-            if isPurchasing {
-                let _ = print("[AddOnsView] isPurchasing == true, showing ProgressView.")
+            if isPurchasingRemoveAds {
                 ProgressView()
             } else {
-                let _ = print("[AddOnsView] isPurchasing == false, showing Subscribe button.")
                 Button("Subscribe") {
-                    print("[AddOnsView] Subscribe button tapped.")
-                    purchaseRemoveAds()
+                    isPurchasingRemoveAds = true
+                    StoreKitHelper.shared.purchaseRemoveAds { success in
+                        isPurchasingRemoveAds = false
+                        purchaseStatusMessage = success
+                        ? "Remove Ads subscription active."
+                        : "Purchase failed or was cancelled."
+                    }
                 }
                 .buttonStyle(.borderedProminent)
             }
         }
     }
     
-    // MARK: - Purchase Logic
-    private func purchaseRemoveAds() {
-        print("[AddOnsView] purchaseRemoveAds called.")
-        guard !isPurchasing else {
-            print("[AddOnsView] Already purchasing. Aborting.")
-            return
-        }
-        
-        isPurchasing = true
-        purchaseStatusMessage = ""
-        print("[AddOnsView] Initiating simulated purchase. isPurchasing set to true.")
-        
-        // Placeholder for real StoreKit-based subscription logic:
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.isPurchasing = false
-            print("[AddOnsView] Simulated purchase delay complete. isPurchasing set to false.")
-            
-            let success = Bool.random()
-            if success {
-                print("[AddOnsView] Simulated purchase success. Updating purchaseStatusMessage.")
-                self.purchaseStatusMessage = "Thank you! Remove Ads subscription is now active."
-            } else {
-                print("[AddOnsView] Simulated purchase failure/cancellation. Updating purchaseStatusMessage.")
-                self.purchaseStatusMessage = "Purchase failed or was cancelled."
+    private var templateSubscriptionRow: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text("Templates (Monthly)")
+                    .font(.headline)
+                Text("$0.99 / month")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
-        }
-    }
-    
-    // MARK: - Restore
-    private func restorePurchases() {
-        print("[AddOnsView] restorePurchases called. Clearing purchaseStatusMessage.")
-        purchaseStatusMessage = ""
-        
-        // Placeholder for real restore logic
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            let restored = Bool.random()
-            if restored {
-                print("[AddOnsView] Simulated restore success. Updating purchaseStatusMessage.")
-                self.purchaseStatusMessage = "Your subscriptions have been restored."
+            Spacer()
+            if isPurchasingTemplates {
+                ProgressView()
             } else {
-                print("[AddOnsView] Simulated restore failed. Updating purchaseStatusMessage.")
-                self.purchaseStatusMessage = "No previous subscription found."
+                Button("Subscribe") {
+                    isPurchasingTemplates = true
+                    StoreKitHelper.shared.purchaseTemplateSubscription { success in
+                        isPurchasingTemplates = false
+                        purchaseStatusMessage = success
+                        ? "Templates subscription active."
+                        : "Purchase failed or was cancelled."
+                    }
+                }
+                .buttonStyle(.borderedProminent)
             }
         }
     }

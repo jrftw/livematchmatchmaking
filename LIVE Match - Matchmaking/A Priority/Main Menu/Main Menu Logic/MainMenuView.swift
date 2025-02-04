@@ -1,5 +1,4 @@
-// FILE: MainMenuView.swift
-
+// MARK: - MainMenuView.swift
 import SwiftUI
 import FirebaseAuth
 
@@ -20,6 +19,7 @@ public struct MainMenuView: View {
     private let showAchievements         = true
     private let showLeaderboards         = true
     private let showAgencyCNReview       = false
+    private let showTemplates            = true
     private let showCreateAccountOrLogin = true
     private let showHelp                 = true
     private let showSettings             = true
@@ -196,7 +196,17 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 9. News
+        // 9. Templates
+        if showTemplates {
+            items.append(MenuItem(
+                title: "Templates",
+                icon: "doc.text.fill",
+                color: .cyan,
+                destination: AnyView(TemplatesView())
+            ))
+        }
+        
+        // 10. News
         if showNews {
             items.append(MenuItem(
                 title: "News",
@@ -206,7 +216,7 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 10. Help
+        // 11. Help
         if showHelp {
             items.append(MenuItem(
                 title: "Help",
@@ -216,7 +226,7 @@ public struct MainMenuView: View {
             ))
         }
         
-        // 11. Settings
+        // 12. Settings
         if showSettings {
             items.append(MenuItem(
                 title: "Settings",

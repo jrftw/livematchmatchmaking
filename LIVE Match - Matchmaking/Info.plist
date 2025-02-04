@@ -2,12 +2,12 @@
 <!--
  Info.plist
  Fully configured and descriptive for LIVE Match - Matchmaking app.
- 
+
  Includes:
   • Core metadata (Bundle ID, version, etc.)
   • Firebase configuration
   • AdMob & SKAdNetwork settings
-  • Background modes
+  • Background modes (removed persistent background location if only needed for timezone)
   • BGTaskScheduler IDs
   • Location usage descriptions
   • App Tracking Transparency (ATT) usage description
@@ -19,27 +19,27 @@
     <!-- MARK: App Core Metadata -->
     <key>CFBundleIdentifier</key>
     <string>Infinitum-Imagery-LLC.LIVE-Match---Matchmaking</string>
-    
+
     <key>CFBundleName</key>
     <string>LIVE Match - Matchmaking</string>
-    
+
     <key>CFBundleDisplayName</key>
     <string>LIVE Match</string>
-    
+
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
-    
+
     <key>CFBundleVersion</key>
-    <string>6</string>
-    
+    <string>7</string>
+
     <!-- MARK: Firebase Settings -->
     <key>FirebaseAppDelegateProxyEnabled</key>
     <true/>
-    
+
     <!-- MARK: AdMob Settings -->
     <key>GADApplicationIdentifier</key>
     <string>ca-app-pub-6815311336585204~7995771052</string>
-    
+
     <!-- MARK: SKAdNetwork Items -->
     <key>SKAdNetworkItems</key>
     <array>
@@ -80,20 +80,18 @@
             <string>n38lu8286q.skadnetwork</string>
         </dict>
     </array>
-    
-    <!-- MARK: Background Modes -->
+
+    <!-- MARK: Background Modes (location removed if only needed while app is foreground) -->
     <key>UIBackgroundModes</key>
     <array>
         <!-- Allows push notifications in the background -->
         <string>remote-notification</string>
         <!-- Allows BGTaskScheduler background tasks -->
         <string>processing</string>
-        <!-- Allows location-based updates in background -->
-        <string>location</string>
         <!-- Allows background fetch for content refresh -->
         <string>fetch</string>
     </array>
-    
+
     <!-- MARK: BGTask Scheduler Identifiers -->
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
@@ -101,18 +99,21 @@
         <string>com.yourcompany.yourapp.refresh</string>
         <string>com.yourcompany.yourapp.processing</string>
     </array>
-    
+
     <!-- MARK: Location Usage Descriptions -->
-    <!-- Provide explanations for why the app uses location services. -->
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>This app needs your location at all times to detect your time zone for bracket scheduling, even in the background.</string>
-    
+    <!-- Since you only need location for timezone while the app is open, you can keep the "When In Use" description. -->
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app uses your location to detect your current time zone for brackets while the app is open.</string>
-    
+
+    <!-- If you truly do not need location always, remove these keys or leave them blank. -->
+    <!--
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app needs your location at all times to detect your time zone for bracket scheduling, even in the background.</string>
+
     <key>NSLocationAlwaysUsageDescription</key>
     <string>This app needs your location at all times to ensure accurate bracket times, location-based matchmaking, and continuous alerts.</string>
-    
+    -->
+
     <!-- MARK: App Tracking Transparency (ATT) -->
     <key>NSUserTrackingUsageDescription</key>
     <string>We use your device’s advertising identifier to personalize ads and measure campaign effectiveness. Your permission helps us deliver a better user experience.</string>

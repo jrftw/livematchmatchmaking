@@ -90,6 +90,15 @@ public struct Changelog {
                 "Revamped location services to accurately detect user time zones without requiring continuous background access.",
                 "Added offline mode for bracket browsing, allowing participants to view schedules and statuses even without a network connection."
             ]
+        ),
+        // MARK: Added entry for Build 7
+        ChangelogEntry(
+            version: "1.0",
+            build: "7",
+            releaseDate: "2/5/25",
+            changes: [
+                "Bug fixes and improvments"
+            ]
         )
     ]
 }

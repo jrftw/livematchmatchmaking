@@ -1,6 +1,7 @@
+// MARK: - CreateDirectMessageView.swift
 import SwiftUI
-import FirebaseFirestore
 import FirebaseAuth
+import FirebaseFirestore
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 final class DirectMessageUserSearchViewModel: ObservableObject {
@@ -19,7 +20,7 @@ final class DirectMessageUserSearchViewModel: ObservableObject {
             var loaded: [UserProfile] = []
             for doc in docs {
                 if let user = try? doc.data(as: UserProfile.self) {
-                    // Exclude the current user from results, if you prefer
+                    // Exclude the current user from results if you prefer
                     if user.id != Auth.auth().currentUser?.uid {
                         loaded.append(user)
                     }
@@ -34,9 +35,7 @@ final class DirectMessageUserSearchViewModel: ObservableObject {
     var filteredUsers: [UserProfile] {
         let trimmed = searchText.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return allUsers }
-        return allUsers.filter {
-            $0.username.lowercased().contains(trimmed)
-        }
+        return allUsers.filter { $0.username.lowercased().contains(trimmed) }
     }
 }
 
@@ -45,41 +44,62 @@ struct CreateDirectMessageView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var vm = DirectMessageUserSearchViewModel()
     
-    // We'll pass back the chosen userID via this completion
     let onPartnerSelected: (String) -> Void
     
     var body: some View {
+        #if os(iOS)
         NavigationView {
-            Form {
-                TextField("Search username...", text: $vm.searchText)
-                
-                List(vm.filteredUsers, id: \.id!) { user in
-                    Button {
-                        // user.id is optional, so forcibly unwrap with '!'
-                        // or do guard let userID = user.id else { return }
-                        let partnerID = user.id!
-                        onPartnerSelected(partnerID)
-                        
-                        // Optionally create an initial DM doc now, or rely on the parent's side
-                        
-                        presentationMode.wrappedValue.dismiss()
-                    } label: {
-                        VStack(alignment: .leading) {
-                            Text("@\(user.username)")
-                                .font(.headline)
-                            if let b = user.bio, !b.isEmpty {
-                                Text(b).foregroundColor(.secondary)
-                            }
+            content
+                .navigationTitle("New DM")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Cancel") {
+                            presentationMode.wrappedValue.dismiss()
                         }
                     }
                 }
+                .onAppear {
+                    vm.fetchAllUsers()
+                }
+        }
+        #else
+        VStack {
+            Text("New DM")
+                .font(.title)
+                .padding(.top, 10)
+            content
+            HStack {
+                Button("Close") {
+                    presentationMode.wrappedValue.dismiss()
+                }
+                .padding(.top, 8)
             }
-            .navigationTitle("New DM")
-            .navigationBarItems(leading: Button("Cancel") {
-                presentationMode.wrappedValue.dismiss()
-            })
-            .onAppear {
-                vm.fetchAllUsers()
+        }
+        .onAppear {
+            vm.fetchAllUsers()
+        }
+        #endif
+    }
+    
+    @ViewBuilder
+    private var content: some View {
+        Form {
+            TextField("Search username...", text: $vm.searchText)
+            
+            List(vm.filteredUsers, id: \.id!) { user in
+                Button {
+                    let partnerID = user.id!
+                    onPartnerSelected(partnerID)
+                    presentationMode.wrappedValue.dismiss()
+                } label: {
+                    VStack(alignment: .leading) {
+                        Text("@\(user.username)")
+                            .font(.headline)
+                        if let bio = user.bio, !bio.isEmpty {
+                            Text(bio).foregroundColor(.secondary)
+                        }
+                    }
+                }
             }
         }
     }

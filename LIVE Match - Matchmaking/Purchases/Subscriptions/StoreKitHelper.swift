@@ -1,11 +1,4 @@
-//
-//  StoreKitHelper.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//  Example StoreKit 2 helper with "Remove Ads" product integration.
-//
-
+// MARK: - StoreKitHelper.swift
 import Foundation
 import StoreKit
 
@@ -17,38 +10,58 @@ final class StoreKitHelper: ObservableObject {
     @Published var lastPurchaseSuccess = false
     
     // MARK: - Product IDs
-    // Updated product ID for Remove Ads subscription
     private let removeAdsProductID = "com.Infinitum.imagery.llc.LIVEMatch.removeads.monthly"
+    private let templateSubscriptionProductID = "com.Infinitum.imagery.llc.LIVEMatch.templates.monthly"
     
-    // Some example product IDs if you also want them
+    // If you have other products, list them here:
     private let teamPlanProductID = "com.example.LIVEMatch.team"
     private let agencyPlanProductID = "com.example.LIVEMatch.agency"
     private let scouterPlanProductID = "com.example.LIVEMatch.scouter"
     
     // MARK: - StoreKit 2 References
-    // If using .storekit files, you could load products via `Product.products(for:)`
-    private var removeAdsProduct: Product? = nil
+    private var removeAdsProduct: Product?
+    private var templateSubscriptionProduct: Product?
     
-    // MARK: - Singleton or init
+    // MARK: - Singleton
     static let shared = StoreKitHelper()
-    private init() {}
+    private init() {
+        Task {
+            await listenForTransactions()
+        }
+    }
     
-    // MARK: - Load Products (Placeholder)
+    // MARK: - Listen for Transaction Updates
+    @MainActor
+    private func listenForTransactions() async {
+        for await result in Transaction.updates {
+            do {
+                let transaction = try checkVerified(result)
+                // Optionally update internal state here if needed.
+                await transaction.finish()
+            } catch {
+                print("Transaction verification failed: \(error)")
+            }
+        }
+    }
+    
+    // MARK: - Load Products
     func loadProducts() async {
         do {
             let productIDs = [
                 removeAdsProductID,
+                templateSubscriptionProductID,
                 teamPlanProductID,
                 agencyPlanProductID,
                 scouterPlanProductID
             ]
             let storeProducts = try await Product.products(for: productIDs)
             
-            // Store references if needed
             for product in storeProducts {
                 switch product.id {
                 case removeAdsProductID:
                     removeAdsProduct = product
+                case templateSubscriptionProductID:
+                    templateSubscriptionProduct = product
                 default:
                     break
                 }
@@ -63,67 +76,110 @@ final class StoreKitHelper: ObservableObject {
         purchaseInProgress = true
         lastPurchaseSuccess = false
         
-        // If you already loaded products, we can purchase `removeAdsProduct`.
-        // For demonstration, do a placeholder approach if the real product isn't loaded:
+        guard let product = removeAdsProduct else {
+            print("Remove Ads product not loaded. Cannot proceed with purchase.")
+            purchaseInProgress = false
+            completion(false)
+            return
+        }
         
-        if let product = removeAdsProduct {
-            // Make a StoreKit 2 purchase
-            Task {
-                do {
-                    let result = try await product.purchase()
-                    // Evaluate result
-                    switch result {
-                    case .success(let verification):
-                        let transaction = try checkVerified(verification)
-                        finish(transaction: transaction)
-                        purchaseInProgress = false
-                        lastPurchaseSuccess = true
-                        completion(true)
-                        
-                    case .userCancelled, .pending:
-                        purchaseInProgress = false
-                        completion(false)
-                        
-                    @unknown default:
-                        purchaseInProgress = false
-                        completion(false)
-                    }
-                } catch {
-                    print("Purchase error: \(error.localizedDescription)")
+        Task {
+            do {
+                let result = try await product.purchase()
+                switch result {
+                case .success(let verification):
+                    let transaction = try checkVerified(verification)
+                    finish(transaction: transaction)
+                    purchaseInProgress = false
+                    lastPurchaseSuccess = true
+                    completion(true)
+                case .userCancelled, .pending:
+                    purchaseInProgress = false
+                    completion(false)
+                @unknown default:
                     purchaseInProgress = false
                     completion(false)
                 }
+            } catch {
+                print("Purchase error: \(error.localizedDescription)")
+                purchaseInProgress = false
+                completion(false)
             }
-        } else {
-            // Fallback or do a random success for placeholder
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                let success = Bool.random()
-                self.purchaseInProgress = false
-                self.lastPurchaseSuccess = success
-                completion(success)
+        }
+    }
+    
+    // MARK: - Purchase Template Subscription
+    func purchaseTemplateSubscription(completion: @escaping (Bool) -> Void) {
+        purchaseInProgress = true
+        lastPurchaseSuccess = false
+        
+        guard let product = templateSubscriptionProduct else {
+            print("Template subscription product not loaded. Cannot proceed with purchase.")
+            purchaseInProgress = false
+            completion(false)
+            return
+        }
+        
+        Task {
+            do {
+                let result = try await product.purchase()
+                switch result {
+                case .success(let verification):
+                    let transaction = try checkVerified(verification)
+                    finish(transaction: transaction)
+                    purchaseInProgress = false
+                    lastPurchaseSuccess = true
+                    completion(true)
+                case .userCancelled, .pending:
+                    purchaseInProgress = false
+                    completion(false)
+                @unknown default:
+                    purchaseInProgress = false
+                    completion(false)
+                }
+            } catch {
+                print("Purchase error: \(error.localizedDescription)")
+                purchaseInProgress = false
+                completion(false)
             }
+        }
+    }
+    
+    // MARK: - Restore Purchases
+    @MainActor
+    func restorePurchases() async -> Bool {
+        do {
+            _ = try await AppStore.sync()
+            
+            var foundSubscription = false
+            for await result in Transaction.currentEntitlements {
+                if case .verified(let transaction) = result {
+                    if transaction.productID == removeAdsProductID ||
+                       transaction.productID == templateSubscriptionProductID {
+                        foundSubscription = true
+                    }
+                }
+            }
+            return foundSubscription
+        } catch {
+            print("Failed to restore purchases: \(error.localizedDescription)")
+            return false
         }
     }
     
     // MARK: - Helper: Check Verified
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
-        // StoreKit 2 verification approach
         switch result {
         case .unverified:
             throw StoreKitError.notVerified
-        case .verified(let safe):
-            return safe
+        case .verified(let transaction):
+            return transaction
         }
     }
     
     // MARK: - Finish transaction
     private func finish(transaction: Transaction) {
-        // Optionally finish it if needed
-        Task {
-            await transaction.finish()
-        }
-        // Also, you'd set the user's profile hasRemoveAds = true
-        // either locally or in Firestore, etc.
+        Task { await transaction.finish() }
     }
 }
 
