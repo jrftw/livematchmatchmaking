@@ -5,28 +5,21 @@
 //  Created by Kevin Doyle Jr. on 1/30/25.
 //
 // MARK: - AchievementsView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Shows achievements, progress, and daily login/streak info.
+// Displays achievements, progress, daily login/streak info.
 
 import SwiftUI
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct AchievementsView: View {
-    // MARK: - ObservedObject
     @ObservedObject private var achievementsManager: AchievementsManager
     
-    // MARK: - Init
     public init(manager: AchievementsManager) {
         self.achievementsManager = manager
         print("[AchievementsView] init called.")
     }
     
-    // MARK: - Body
     public var body: some View {
-        let _ = print("[AchievementsView] body invoked. Building achievements UI.")
-        
         VStack(spacing: 20) {
-            let _ = print("[AchievementsView] Title => 'Achievements'.")
             Text("Achievements")
                 .font(.largeTitle)
                 .padding(.top, 40)
@@ -53,10 +46,6 @@ public struct AchievementsView: View {
                     .fontWeight(.bold)
             }
             
-            // Called automatically on first appearance for the day
-            // to claim the daily login if not already claimed.
-            // Remove any manual button; the logic is now auto in onAppear.
-            
             List(achievementsManager.achievements, id: \.self) { achievement in
                 VStack(alignment: .leading, spacing: 4) {
                     Text(achievement.name)
@@ -78,6 +67,7 @@ public struct AchievementsView: View {
         }
         .navigationTitle("Achievements")
         .navigationBarTitleDisplayMode(.inline)
+        // Register daily login each time the view appears
         .onAppear {
             achievementsManager.registerDailyLogin()
         }

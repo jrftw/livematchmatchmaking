@@ -2,7 +2,6 @@
 import SwiftUI
 import FirebaseAuth
 
-// MARK: - MainMenuView
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct MainMenuView: View {
     // MARK: Properties
@@ -168,11 +167,12 @@ public struct MainMenuView: View {
         
         // 6. Leaderboards
         if showLeaderboards {
+            // LeaderboardsView has no init with arguments, so remove "manager:"
             items.append(MenuItem(
                 title: "Leaderboards",
                 icon: "list.number",
                 color: .orange,
-                destination: AnyView(LeaderboardsView(manager: achievementsManager))
+                destination: AnyView(LeaderboardsView())
             ))
         }
         

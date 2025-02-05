@@ -2,12 +2,12 @@
 //  BottomBarView.swift
 //  LIVE Match - Matchmaking
 //
-//  A bottom bar with 4 buttons. If not fully logged in, show an alert for feed/messages/profile.
+//  A bottom bar with 5 buttons (Menu, Feed, Search, Messages, Profile).
+//  If not fully logged in, show an alert for feed/search/messages/profile.
 //
 
 import SwiftUI
 import FirebaseAuth
-
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct BottomBarView: View {
@@ -19,6 +19,10 @@ public struct BottomBarView: View {
     
     // MARK: - State
     @State private var showingGuestAlert = false
+    
+    // MARK: - Search Toggle
+    // Currently disabled; set to true when you want Search to be active
+    private let searchEnabled = false
     
     // MARK: - Init
     public init(selectedScreen: Binding<MainScreen>) {
@@ -36,8 +40,8 @@ public struct BottomBarView: View {
                 .fill(Color(UIColor.systemBackground).opacity(0.95))
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: -2)
             
-            HStack(spacing: 40) {
-                // Menu
+            HStack(spacing: 30) {
+                // MARK: Menu
                 Button {
                     selectedScreen = .menu
                 } label: {
@@ -47,7 +51,7 @@ public struct BottomBarView: View {
                     }
                 }
                 
-                // Feed
+                // MARK: Feed
                 Button {
                     if fullyLoggedIn {
                         selectedScreen = .feed
@@ -61,7 +65,19 @@ public struct BottomBarView: View {
                     }
                 }
                 
-                // Messages
+                // MARK: Search (Only show if searchEnabled and not guest)
+                if searchEnabled && fullyLoggedIn {
+                    Button {
+                        selectedScreen = .search
+                    } label: {
+                        VStack(spacing: 2) {
+                            Image(systemName: "magnifyingglass")
+                            Text("Search").font(.footnote)
+                        }
+                    }
+                }
+                
+                // MARK: Messages
                 Button {
                     if fullyLoggedIn {
                         selectedScreen = .messages
@@ -75,7 +91,7 @@ public struct BottomBarView: View {
                     }
                 }
                 
-                // Profile
+                // MARK: Profile
                 Button {
                     if fullyLoggedIn {
                         selectedScreen = .profile

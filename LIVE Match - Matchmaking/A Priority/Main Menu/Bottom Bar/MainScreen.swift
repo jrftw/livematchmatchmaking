@@ -7,6 +7,7 @@ import SwiftUI
 public enum MainScreen {
     case menu
     case feed
+    case search
     case messages
     case profile
 }

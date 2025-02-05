@@ -49,6 +49,14 @@ public struct RootContainerView: View {
             }
             .navigationViewStyle(StackNavigationViewStyle())
             
+        case .search:
+            // Provide a SearchView for the .search case
+            NavigationView {
+                SearchView()
+                    .navigationBarTitle("Search")
+            }
+            .navigationViewStyle(StackNavigationViewStyle())
+            
         case .messages:
             NavigationView {
                 MessagesHomeView()
@@ -58,9 +66,6 @@ public struct RootContainerView: View {
             
         case .profile:
             NavigationView {
-                // Instead of passing placeholder data,
-                // we use the ProfileHomeView that fetches real data
-                // from Firestore using the current user's uid.
                 ProfileHomeView(userID: Auth.auth().currentUser?.uid)
                     .navigationTitle("Profile")
                     .navigationBarTitleDisplayMode(.inline)

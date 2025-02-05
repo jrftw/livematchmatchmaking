@@ -1,26 +1,68 @@
-//
-//  LeaderboardsView.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 1/29/25.
-//
 // MARK: - LeaderboardsView.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Displays global/local leaderboards by fetching real data (no sample entries).
+// Displays global leaderboards by fetching real data from Firestore.
 
 import SwiftUI
+import FirebaseFirestore
+
+@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+public class LeaderboardViewModel: ObservableObject {
+    public struct LeaderboardEntry: Identifiable {
+        public let id: String
+        public let username: String
+        public let totalScore: Int
+        public let loginStreak: Int
+    }
+    
+    @Published public var entries: [LeaderboardEntry] = []
+    
+    public init() {}
+    
+    public func fetchLeaderboard() {
+        let db = Firestore.firestore()
+        
+        db.collection("users")
+            .order(by: "totalScore", descending: true)
+            .limit(to: 100)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("[LeaderboardViewModel] Error fetching leaderboard: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let docs = snapshot?.documents else {
+                    print("[LeaderboardViewModel] No documents found.")
+                    return
+                }
+                
+                let newEntries = docs.compactMap { doc -> LeaderboardEntry? in
+                    let data = doc.data()
+                    guard let username = data["username"] as? String else { return nil }
+                    let totalScore = data["totalScore"] as? Int ?? 0
+                    let streak = data["loginStreak"] as? Int ?? 0
+                    
+                    return LeaderboardEntry(
+                        id: doc.documentID,
+                        username: username,
+                        totalScore: totalScore,
+                        loginStreak: streak
+                    )
+                }
+                
+                DispatchQueue.main.async {
+                    self.entries = newEntries
+                }
+            }
+    }
+}
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct LeaderboardsView: View {
-    // MARK: - ObservedObject
-    @ObservedObject private var achievementsManager: AchievementsManager
+    @ObservedObject private var viewModel = LeaderboardViewModel()
     
-    // MARK: - Init
-    public init(manager: AchievementsManager) {
-        self.achievementsManager = manager
-    }
+    public init() {}
     
-    // MARK: - Body
     public var body: some View {
         VStack(spacing: 10) {
             Text("Leaderboards")
@@ -30,27 +72,39 @@ public struct LeaderboardsView: View {
             Text("Check your rank and compare scores!")
                 .foregroundColor(.secondary)
             
-            // Placeholder list showing only the current user, no sample data.
-            List {
-                Section(header: Text("Your Position")) {
-                    HStack {
-                        Text(achievementsManager.username)
-                        Spacer()
-                        Text("\(achievementsManager.totalScore) pts")
-                            .fontWeight(.semibold)
+            if !viewModel.entries.isEmpty {
+                Text("Total on Leaderboard: \(viewModel.entries.count)")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            }
+            
+            if viewModel.entries.isEmpty {
+                Spacer()
+                Text("No leaderboard entries available.")
+                    .foregroundColor(.secondary)
+                Spacer()
+            } else {
+                List {
+                    ForEach(Array(viewModel.entries.enumerated()), id: \.element.id) { (index, entry) in
+                        HStack {
+                            Text("\(index + 1). \(entry.username)")
+                            Spacer()
+                            VStack(alignment: .trailing) {
+                                Text("\(entry.totalScore) pts")
+                                    .fontWeight(.semibold)
+                                Text("Streak: \(entry.loginStreak)")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                        }
                     }
                 }
-                
-                // Additional fetched user rows could go here.
-                // Replace or extend with your real backend logic.
+                .listStyle(PlainListStyle())
             }
-            .listStyle(PlainListStyle())
-            
             Spacer()
-            
-            Text("Your Current Score: \(achievementsManager.totalScore) pts")
-                .font(.headline)
-                .padding(.bottom, 20)
+        }
+        .onAppear {
+            viewModel.fetchLeaderboard()
         }
     }
 }
