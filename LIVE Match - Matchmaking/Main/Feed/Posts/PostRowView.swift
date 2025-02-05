@@ -1,6 +1,6 @@
 // MARK: - PostRowView.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Displays a single post with user info, plus Like/Comment/Follow buttons.
+// Displays a single post with user info, plus Like/Comment/Follow/Block/Report actions.
 
 import SwiftUI
 import AVKit
@@ -10,7 +10,6 @@ public struct PostRowView: View {
     @StateObject private var rowVM: PostRowViewModel
     public let post: Post
     
-    // MARK: Comment Composer
     @State private var showCommentSheet = false
     @State private var commentText = ""
     
@@ -21,17 +20,14 @@ public struct PostRowView: View {
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // User info row
             HStack(alignment: .top, spacing: 12) {
-                // Profile pic
                 if let picURL = rowVM.profilePicURL,
                    !picURL.isEmpty,
                    let url = URL(string: picURL) {
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .empty:
-                            ProgressView()
-                                .frame(width: 44, height: 44)
+                            ProgressView().frame(width: 44, height: 44)
                         case .success(let image):
                             image
                                 .resizable()
@@ -59,6 +55,7 @@ public struct PostRowView: View {
                             .font(.headline)
                             .foregroundColor(.blue)
                     }
+                    .buttonStyle(.plain)
                     
                     Text(post.timestamp, style: .date)
                         .font(.caption)
@@ -66,14 +63,12 @@ public struct PostRowView: View {
                 }
             }
             
-            // Post text
             if !post.text.isEmpty {
                 Text(post.text)
                     .font(.body)
                     .padding(.top, 4)
             }
             
-            // Post image
             if let imageURL = post.imageURL, !imageURL.isEmpty {
                 AsyncImage(url: URL(string: imageURL)) { phase in
                     switch phase {
@@ -95,7 +90,6 @@ public struct PostRowView: View {
                 }
             }
             
-            // Post video
             if let videoURL = post.videoURL, !videoURL.isEmpty {
                 if let url = URL(string: videoURL) {
                     VideoPlayer(player: AVPlayer(url: url))
@@ -105,7 +99,6 @@ public struct PostRowView: View {
                 }
             }
             
-            // Buttons row
             HStack(spacing: 30) {
                 Button(rowVM.isLiked ? "Unlike" : "Like") {
                     guard let postId = post.id else { return }
@@ -115,10 +108,12 @@ public struct PostRowView: View {
                         LikeService.shared.likePost(postId: postId) { _ in }
                     }
                 }
+                .buttonStyle(.plain)
                 
                 Button("Comment") {
                     showCommentSheet = true
                 }
+                .buttonStyle(.plain)
                 
                 Button(rowVM.isFollowing ? "Unfollow" : "Follow") {
                     if rowVM.isFollowing {
@@ -127,6 +122,23 @@ public struct PostRowView: View {
                         FollowService.shared.followUser(targetUserId: post.userId) { _ in }
                     }
                 }
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                Menu {
+                    Button("Block") {
+                        BlockService.shared.blockUser(userId: post.userId) { _ in }
+                    }
+                    Button("Report") {
+                        guard let postId = post.id else { return }
+                        ReportService.shared.reportPost(postId: postId, reason: "Inappropriate Content") { _ in }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(.primary)
+                }
+                .buttonStyle(.plain)
             }
             .font(.subheadline)
             .padding(.top, 6)
