@@ -4,7 +4,7 @@
 //
 //  Created by Kevin Doyle Jr. on 2/1/25.
 //
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
+//  iOS 15.6+, macOS 11.5, visionOS 2.0+
 //  Container holding all ChangelogEntry items.
 //
 
@@ -78,7 +78,7 @@ public struct Changelog {
                 "Further optimized overall memory usage, ensuring smoother performance on all devices."
             ]
         ),
-        // MARK: Added entry for Build 6
+        // MARK: Build 6
         ChangelogEntry(
             version: "1.0",
             build: "6",
@@ -91,13 +91,30 @@ public struct Changelog {
                 "Added offline mode for bracket browsing, allowing participants to view schedules and statuses even without a network connection."
             ]
         ),
-        // MARK: Added entry for Build 7
+        // MARK: Build 7
         ChangelogEntry(
             version: "1.0",
             build: "7",
+            releaseDate: "2/4/25",
+            changes: [
+                "Enhanced Achievements system to award daily login only once per day.",
+                "Refined Leaderboards integration to reflect totalScore and loginStreak in real time.",
+                "Improved the reporting/blocking feature with better success feedback and error handling.",
+                "Optimized feed filtering, adding a toggle for objectionable content (placeholder for future moderation tools).",
+                "Fixed minor UI glitches in macOS and visionOS layouts, especially in sidebars and navigation bars."
+            ]
+        ),
+        // MARK: Build 8
+        ChangelogEntry(
+            version: "1.0",
+            build: "8",
             releaseDate: "2/5/25",
             changes: [
-                "Bug fixes and improvments"
+                "Upgraded matchmaking logic with new skill tiers for more accurate pairing.",
+                "Overhauled the bracket scheduling engine to support custom date/time formats in different locales.",
+                "Introduced a 'Search' feature (currently disabled by default) in the bottom bar for upcoming expansions.",
+                "Improved overall stability, reducing random logout occurrences for certain iCloud-based sign-ins.",
+                "Expanded daily login tracking with a dedicated user progress log in the background, capturing more session data for analytics."
             ]
         )
     ]

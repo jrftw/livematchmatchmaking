@@ -15,10 +15,10 @@ import SwiftUI
 public struct AppVersion {
     // MARK: - Static Version & Build
     public static let currentVersion: String = "1.0"
-    public static let currentBuild: String = "7"
+    public static let currentBuild: String = "8"
     
     private static let requiredVersion: String = "1.0"
-    private static let requiredBuild: String = "7"
+    private static let requiredBuild: String = "8"
     
     // MARK: - isVersionValid
     // Ensures the user is on at least the requiredVersion/Build
