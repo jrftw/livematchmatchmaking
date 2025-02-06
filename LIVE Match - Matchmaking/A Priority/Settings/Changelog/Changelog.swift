@@ -1,15 +1,3 @@
-//
-//  Changelog.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 2/1/25.
-//
-//  iOS 15.6+, macOS 11.5, visionOS 2.0+
-//  Container holding all ChangelogEntry items.
-//
-
-import Foundation
-
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct Changelog {
     // MARK: - Static Entries
@@ -115,6 +103,19 @@ public struct Changelog {
                 "Introduced a 'Search' feature (currently disabled by default) in the bottom bar for upcoming expansions.",
                 "Improved overall stability, reducing random logout occurrences for certain iCloud-based sign-ins.",
                 "Expanded daily login tracking with a dedicated user progress log in the background, capturing more session data for analytics."
+            ]
+        ),
+        // MARK: Build 9
+        ChangelogEntry(
+            version: "1.0",
+            build: "9",
+            releaseDate: "2/6/25",
+            changes: [
+                "Deployed a new tournament scoreboard that updates in real-time across all connected devices.",
+                "Refined availability scheduling, making it simpler to view and edit multi-day brackets.",
+                "Enhanced bracket cancellation logic to handle last-minute player dropouts gracefully.",
+                "Added new advanced analytics for community managers, tracking average match durations, peak concurrency, and user retention metrics.",
+                "Fixed several UI alignment issues on iPhone SE and iPhone Mini devices, improving readability in smaller form factors."
             ]
         )
     ]
