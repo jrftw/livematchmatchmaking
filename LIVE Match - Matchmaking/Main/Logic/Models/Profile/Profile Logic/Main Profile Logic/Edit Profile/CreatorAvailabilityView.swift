@@ -1,12 +1,9 @@
+// MARK: CreatorAvailabilityView.swift
+// iOS 15.6+, macOS 11.5, visionOS 2.0+
 //
-//  CreatorAvailabilityView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5, visionOS 2.0+
-//
-//  Manages user Availability with 15-min slots per day,
-//  showing times in 12-hour format (AM/PM) to be more user-friendly.
-//
+// Manages user availability with 15-min slots per day
+// displayed in 12-hour (AM/PM) format. Also uses LocationRegionDetector
+// to guess local time zone.
 
 import SwiftUI
 
@@ -14,15 +11,15 @@ import SwiftUI
 public struct CreatorAvailabilityView: View {
     @StateObject private var locationDetector = LocationRegionDetector()
     
-    // Each day has 96 slots of 15 minutes (00:00..23:45).
-    // Key is the weekday, value is a set of slot indices that are "selected" (available).
+    // Each day => 96 slots of 15 minutes (00:00..23:45).
+    // Key = weekday, value = a set of slot indices that are "selected."
     @State private var availability: [String: Set<Int>] = [
         "Monday": [], "Tuesday": [], "Wednesday": [],
         "Thursday": [], "Friday": [], "Saturday": [], "Sunday": []
     ]
     
     private let daysOfWeek = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
-    private let slotCount = 96  // 24 hours * (60 / 15) = 96
+    private let slotCount = 96  // 24 * 4 = 96
     
     public init() {}
     
@@ -31,6 +28,7 @@ public struct CreatorAvailabilityView: View {
             Form {
                 timeZoneSection()
                 
+                // Show availability toggles for each day
                 ForEach(daysOfWeek, id: \.self) { day in
                     dayAvailabilitySection(day)
                 }
@@ -43,29 +41,22 @@ public struct CreatorAvailabilityView: View {
     }
 }
 
-// MARK: - Subviews
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 extension CreatorAvailabilityView {
-    
-    // MARK: Time Zone
     private func timeZoneSection() -> some View {
         Section("Time Zone") {
-            if let tz = locationDetector.detectedTimeZone {
-                Text("Detected Time Zone: \(tz)")
-            } else {
-                Text("Time Zone: Unknown")
-                    .foregroundColor(.secondary)
-            }
+            Text("Detected Time Zone: \(locationDetector.detectedTimeZone ?? "Unknown")")
+                .foregroundColor(locationDetector.detectedTimeZone == nil ? .secondary : .primary)
+            
             Button("Refresh Location") {
                 locationDetector.requestLocationPermission()
             }
         }
     }
     
-    // MARK: Day Section
     private func dayAvailabilitySection(_ day: String) -> some View {
         Section(day) {
-            // We'll show 4 toggles per row.
+            // Convert the stride to an Array for ForEach
             let slotsPerRow = 4
             let rowIndices = Array(stride(from: 0, to: slotCount, by: slotsPerRow))
             
@@ -84,7 +75,6 @@ extension CreatorAvailabilityView {
         }
     }
     
-    // MARK: Single Slot Toggle
     private func slotToggle(_ day: String, slotIndex: Int) -> some View {
         let minutesTotal = slotIndex * 15
         let hh24 = minutesTotal / 60
@@ -107,22 +97,19 @@ extension CreatorAvailabilityView {
         .font(.footnote)
     }
     
-    // MARK: 12-Hour Format Helper
     private func formatTime12Hour(hh24: Int, mm: Int) -> String {
-        // Convert 24-hour to 12-hour with AM/PM suffix
         var suffix = "AM"
         var hour12 = hh24
         
         switch hour12 {
         case 0:
-            hour12 = 12  // Midnight -> 12 AM
+            hour12 = 12
         case 12:
-            suffix = "PM"  // 12:xx is PM
+            suffix = "PM"
         case 13...23:
             hour12 -= 12
             suffix = "PM"
         default:
-            // For 1..11, suffix remains "AM"
             break
         }
         

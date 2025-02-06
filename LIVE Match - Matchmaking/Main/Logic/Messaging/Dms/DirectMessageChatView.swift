@@ -1,7 +1,4 @@
-// MARK: File 13: DirectMessageChatView.swift
-// MARK: iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// One-on-one chat screen
-
+// MARK: - DirectMessageChatView.swift
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
@@ -17,6 +14,8 @@ public struct DirectMessage: Identifiable {
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 final class DirectMessageChatViewModel: ObservableObject {
     @Published var dms: [DirectMessage] = []
+    @Published var chatPartnerUsername: String = ""
+    
     private let db = FirebaseManager.shared.db
     private var listener: ListenerRegistration?
     
@@ -39,22 +38,32 @@ final class DirectMessageChatViewModel: ObservableObject {
                 let ts = data["timestamp"] as? Timestamp
                 let timestamp = ts?.dateValue() ?? Date()
                 
-                let dm = DirectMessage(
-                    id: docID,
-                    fromUserID: fromID,
-                    toUserID: toID,
-                    text: text,
-                    timestamp: timestamp
+                loaded.append(
+                    DirectMessage(
+                        id: docID,
+                        fromUserID: fromID,
+                        toUserID: toID,
+                        text: text,
+                        timestamp: timestamp
+                    )
                 )
-                loaded.append(dm)
             }
             self.dms = loaded
         }
     }
     
+    func fetchChatPartnerUsername(_ partnerID: String) {
+        db.collection("users").document(partnerID).getDocument { doc, error in
+            guard error == nil, let data = doc?.data(),
+                  let username = data["username"] as? String else { return }
+            DispatchQueue.main.async {
+                self.chatPartnerUsername = username
+            }
+        }
+    }
+    
     func sendDM(to partnerID: String, text: String) {
         guard !text.isEmpty else { return }
-        
         if Auth.auth().currentUser == nil {
             if AuthManager.shared.isGuest {
                 let docData: [String: Any] = [
@@ -103,7 +112,6 @@ struct DirectMessageChatView: View {
                     ForEach(vm.dms) { dm in
                         let isCurrentUser = dm.fromUserID == Auth.auth().currentUser?.uid
                         let bgColor = isCurrentUser ? Color.blue.opacity(0.3) : Color.gray.opacity(0.2)
-                        
                         HStack {
                             if isCurrentUser { Spacer() }
                             Text(dm.text)
@@ -116,7 +124,6 @@ struct DirectMessageChatView: View {
                 }
                 .padding(.top)
             }
-            
             HStack {
                 TextField("Message...", text: $text)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -127,9 +134,14 @@ struct DirectMessageChatView: View {
             }
             .padding()
         }
-        .navigationTitle("DM with \(chatPartnerID)")
+        .navigationTitle(
+            vm.chatPartnerUsername.isEmpty
+            ? "DM with \(chatPartnerID)"
+            : "DM with \(vm.chatPartnerUsername)"
+        )
         .onAppear {
             vm.startListening(chatPartnerID: chatPartnerID)
+            vm.fetchChatPartnerUsername(chatPartnerID)
         }
     }
 }

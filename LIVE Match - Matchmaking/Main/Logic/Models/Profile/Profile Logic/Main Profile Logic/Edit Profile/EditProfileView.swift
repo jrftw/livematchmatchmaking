@@ -1,5 +1,10 @@
 // MARK: EditProfileView.swift
 // iOS 15.6+, macOS 11.5, visionOS 2.0+
+//
+// A single-file approach that places all code in one file.
+// Combine the main struct and the extension logic to avoid
+// "Cannot find in scope" errors. Remove other EditProfileView
+// definitions so this is the sole version.
 
 import SwiftUI
 import FirebaseAuth
@@ -17,23 +22,26 @@ public struct EditProfileView: View {
     @State private var profile: MyUserProfile
     @State private var savingInProgress = false
     
+    // Image handling
     @State private var newProfileImage: UIImage? = nil
     @State private var newBannerImage: UIImage? = nil
     @State private var showingProfilePicker = false
     @State private var showingBannerPicker = false
     
+    // Basic Info toggles
     @State private var showFirstNamePublicly = false
     @State private var showLastNamePublicly = false
     
+    // Password sheet
     @State private var showingPasswordChange = false
     @State private var newPassword = ""
     @State private var confirmNewPassword = ""
     
+    // Studio sheets
     @State private var showingViewerStudio = false
     @State private var showingCreatorStudio = false
     @State private var showingGamerStudio = false
     @State private var showingCommunityStudio = false
-    
     @State private var showingTeamStudio = false
     @State private var showingAgencyCreatorNetworkStudio = false
     
@@ -53,42 +61,199 @@ public struct EditProfileView: View {
     public var body: some View {
         NavigationView {
             Form {
-                profileBannerSection()
-                basicInfoSection()
+                // MARK: Profile & Banner
+                Section("Profile & Banner") {
+                    HStack {
+                        if let pImg = newProfileImage {
+                            Image(uiImage: pImg)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 70, height: 70)
+                                .clipShape(Circle())
+                        } else if let urlStr = profile.profilePictureURL,
+                                  !urlStr.isEmpty,
+                                  let url = URL(string: urlStr) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .empty:
+                                    Circle().fill(Color.gray.opacity(0.3))
+                                case .success(let loaded):
+                                    loaded.resizable().scaledToFill()
+                                default:
+                                    Circle().fill(Color.gray.opacity(0.3))
+                                }
+                            }
+                            .frame(width: 70, height: 70)
+                            .clipShape(Circle())
+                        } else {
+                            Circle().fill(Color.gray.opacity(0.3))
+                                .frame(width: 70, height: 70)
+                        }
+                        
+                        Spacer()
+                        Button("Change Photo") {
+                            showingProfilePicker = true
+                        }
+                    }
+                    
+                    HStack {
+                        if let bImg = newBannerImage {
+                            Image(uiImage: bImg)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 60)
+                                .cornerRadius(8)
+                        } else if let urlStr = profile.bannerURL,
+                                  !urlStr.isEmpty,
+                                  let url = URL(string: urlStr) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .empty:
+                                    Color.gray.opacity(0.3)
+                                case .success(let loaded):
+                                    loaded.resizable().scaledToFill()
+                                default:
+                                    Color.gray.opacity(0.3)
+                                }
+                            }
+                            .frame(height: 60)
+                            .cornerRadius(8)
+                        } else {
+                            Color.gray.opacity(0.3)
+                                .frame(height: 60)
+                                .cornerRadius(8)
+                        }
+                        Spacer()
+                        Button("Change Banner") {
+                            showingBannerPicker = true
+                        }
+                    }
+                }
                 
+                // MARK: Basic Info
+                Section("Basic Info") {
+                    TextField("First Name", text: bindingForNonOptional(\.firstName))
+                    Toggle("Show First Name Publicly", isOn: $showFirstNamePublicly)
+                    
+                    TextField("Last Name", text: bindingForNonOptional(\.lastName))
+                    Toggle("Show Last Name Publicly", isOn: $showLastNamePublicly)
+                    
+                    TextField("Display Name", text: bindingForNonOptional(\.displayName))
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("@ Username", text: bindingForNonOptional(\.username))
+                        Text("Can only change once every 30 days.")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Button("Request Verification") {
+                        openVerificationForm()
+                    }
+                }
+                
+                // MARK: Location
                 Section("Location") {
                     Picker("Select Country", selection: bindingForOptional(\.location)) {
                         ForEach(countries, id: \.self) { c in
                             Text(c).tag(c as String?)
                         }
                     }
-                    .pickerStyle(.menu)
                 }
                 
-                bioSection()
-                birthdaySection()
-                emailSection()
-                phoneSection()
+                // MARK: Bio
+                Section("Bio") {
+                    TextField("Bio", text: bindingForOptional(\.bio))
+                }
                 
+                // MARK: Birthday
+                Section("Birthday") {
+                    TextField("Birthday (YYYY-MM-DD)", text: bindingForOptional(\.birthday))
+                    Toggle("Show Birthday Publicly", isOn: $profile.birthdayPublicly)
+                }
+                
+                // MARK: Email
+                Section("Email") {
+                    TextField("Email", text: bindingForOptional(\.email))
+                    Toggle("Show Email Publicly", isOn: $profile.emailPublicly)
+                }
+                
+                // MARK: Phone
+                Section("Phone") {
+                    TextField("Phone Number", text: bindingForOptional(\.phoneNumber))
+                    Toggle("Show Phone Publicly", isOn: $profile.phonePublicly)
+                }
+                
+                // MARK: Availability
                 Section("Availability & TimeZone") {
                     NavigationLink("Configure Availability") {
                         CreatorAvailabilityView()
                     }
                 }
                 
-                passwordSection()
-                clanSection()
-                tagsSection()
-                socialLinksSection()
-                
-                Section("Wins / Losses") {
-                    Stepper("Wins: \(profile.wins)", value: bindingForInt(\.wins), in: 0...9999)
-                    Stepper("Losses: \(profile.losses)", value: bindingForInt(\.losses), in: 0...9999)
+                // MARK: Password
+                Section("Change Password") {
+                    Button("Change Password") {
+                        showingPasswordChange = true
+                    }
+                    .disabled(savingInProgress)
                 }
                 
-                lmStudioSection()
-                businessStudioSection()
+                // MARK: Clan
+                Section("Clan") {
+                    TextField("Clan Tag", text: bindingForOptional(\.clanTag))
+                    ColorPicker("Clan Color", selection: clanColorBinding, supportsOpacity: false)
+                }
                 
+                // MARK: Tags
+                Section("Tags") {
+                    TextField("Tags (comma separated)", text: Binding<String>(
+                        get: {
+                            profile.tags.joined(separator: ", ")
+                        },
+                        set: {
+                            let arr = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                            profile.tags = arr.filter { !$0.isEmpty }
+                        }
+                    ))
+                }
+                
+                // MARK: Social Links
+                Section("Social Network Links") {
+                    ForEach(Array(profile.socialLinks.keys), id: \.self) { key in
+                        HStack {
+                            Text(key)
+                            Spacer()
+                            Text(profile.socialLinks[key] ?? "")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Button("Add Link") {}
+                }
+                
+                // MARK: Wins / Losses
+                Section("Wins / Losses") {
+                    Stepper("Wins: \(profile.wins)", value: bindingForInt(\.wins))
+                    Stepper("Losses: \(profile.losses)", value: bindingForInt(\.losses))
+                }
+                
+                // MARK: LM Studio
+                Section("LM Studio") {
+                    Button("Viewer Section") { showingViewerStudio = true }
+                    Button("Creator Section") { showingCreatorStudio = true }
+                    Button("Gamer Section") { showingGamerStudio = true }
+                    Button("Community Section") { showingCommunityStudio = true }
+                }
+                
+                // MARK: Business Studio
+                Section("Business Studio") {
+                    Button("Team Section") { showingTeamStudio = true }
+                    Button("Agency / Creator Network Section") { showingAgencyCreatorNetworkStudio = true }
+                    Button("Scouter Section (Coming Soon)") {}
+                        .disabled(true)
+                }
+                
+                // MARK: Save Changes
                 Section {
                     Button("Save Changes") {
                         saveProfile()
@@ -113,6 +278,7 @@ public struct EditProfileView: View {
             .sheet(isPresented: $showingPasswordChange) {
                 passwordChangeSheet()
             }
+            // Studio Sheets
             .sheet(isPresented: $showingViewerStudio) {
                 ViewerStudioView()
             }
@@ -138,224 +304,13 @@ public struct EditProfileView: View {
     }
 }
 
-// MARK: - ProfilePostsViewModel.swift (New)
-public final class ProfilePostsViewModel: ObservableObject {
-    @Published public var posts: [Post] = []
-    private let db = FirebaseManager.shared.db
-    
-    public init(userId: String?) {
-        guard let userId = userId else { return }
-        fetchPosts(for: userId)
-    }
-    
-    private func fetchPosts(for userId: String) {
-        db.collection("posts")
-            .whereField("userId", isEqualTo: userId)
-            .order(by: "timestamp", descending: true)
-            .addSnapshotListener { snapshot, error in
-                guard let docs = snapshot?.documents else {
-                    self.posts = []
-                    return
-                }
-                self.posts = docs.compactMap { try? $0.data(as: Post.self) }
-            }
-    }
-}
-
-// MARK: - Private Subviews in EditProfileView
+// MARK: - Password Sheet & Save Logic
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-private extension EditProfileView {
-    func profileBannerSection() -> some View {
-        Section("Profile & Banner") {
-            HStack {
-                if let pImg = newProfileImage {
-                    Image(uiImage: pImg)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 70, height: 70)
-                        .clipShape(Circle())
-                } else if let urlStr = profile.profilePictureURL,
-                          !urlStr.isEmpty,
-                          let url = URL(string: urlStr) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            Circle().fill(Color.gray.opacity(0.3))
-                        case .success(let loaded):
-                            loaded.resizable().scaledToFill()
-                        case .failure:
-                            Circle().fill(Color.gray.opacity(0.3))
-                        @unknown default:
-                            Circle().fill(Color.gray.opacity(0.3))
-                        }
-                    }
-                    .frame(width: 70, height: 70)
-                    .clipShape(Circle())
-                } else {
-                    Circle().fill(Color.gray.opacity(0.3))
-                        .frame(width: 70, height: 70)
-                }
-                
-                Spacer()
-                Button("Change Photo") {
-                    showingProfilePicker = true
-                }
-            }
-            
-            HStack {
-                if let bImg = newBannerImage {
-                    Image(uiImage: bImg)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 60)
-                        .cornerRadius(8)
-                } else if let urlStr = profile.bannerURL,
-                          !urlStr.isEmpty,
-                          let url = URL(string: urlStr) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            Color.gray.opacity(0.3)
-                        case .success(let loaded):
-                            loaded.resizable().scaledToFill()
-                        case .failure:
-                            Color.gray.opacity(0.3)
-                        @unknown default:
-                            Color.gray.opacity(0.3)
-                        }
-                    }
-                    .frame(height: 60)
-                    .cornerRadius(8)
-                } else {
-                    Color.gray.opacity(0.3)
-                        .frame(height: 60)
-                        .cornerRadius(8)
-                }
-                
-                Spacer()
-                Button("Change Banner") {
-                    showingBannerPicker = true
-                }
-            }
-        }
-    }
-    
-    func basicInfoSection() -> some View {
-        Section("Basic Info") {
-            TextField("First Name", text: bindingForNonOptional(\.firstName))
-            Toggle("Show First Name Publicly", isOn: $showFirstNamePublicly)
-            
-            TextField("Last Name", text: bindingForNonOptional(\.lastName))
-            Toggle("Show Last Name Publicly", isOn: $showLastNamePublicly)
-            
-            TextField("Display Name", text: bindingForNonOptional(\.displayName))
-            
-            VStack(alignment: .leading, spacing: 4) {
-                TextField("@ Username", text: bindingForNonOptional(\.username))
-                Text("Can only change once every 30 days.")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            }
-            
-            Button("Request Verification") {}
-        }
-    }
-    
-    func bioSection() -> some View {
-        Section("Bio") {
-            TextField("Bio", text: bindingForOptional(\.bio))
-        }
-    }
-    
-    func birthdaySection() -> some View {
-        Section("Birthday") {
-            TextField("Birthday (YYYY-MM-DD)", text: bindingForOptional(\.birthday))
-            Toggle("Show Birthday Publicly", isOn: $profile.birthdayPublicly)
-        }
-    }
-    
-    func emailSection() -> some View {
-        Section("Email") {
-            TextField("Email", text: bindingForOptional(\.email))
-            Toggle("Show Email Publicly", isOn: $profile.emailPublicly)
-        }
-    }
-    
-    func phoneSection() -> some View {
-        Section("Phone") {
-            TextField("Phone Number", text: bindingForOptional(\.phoneNumber))
-            Toggle("Show Phone Publicly", isOn: $profile.phonePublicly)
-        }
-    }
-    
-    func passwordSection() -> some View {
-        Section("Change Password") {
-            Button("Change Password") {
-                showingPasswordChange = true
-            }
-            .disabled(savingInProgress)
-        }
-    }
-    
-    func clanSection() -> some View {
-        Section("Clan") {
-            TextField("Clan Tag", text: bindingForOptional(\.clanTag))
-            ColorPicker("Clan Color", selection: clanColorBinding, supportsOpacity: false)
-        }
-    }
-    
-    func tagsSection() -> some View {
-        Section("Tags") {
-            TextField("Tags (comma separated)", text: Binding<String>(
-                get: { profile.tags.joined(separator: ", ") },
-                set: {
-                    let arr = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-                    profile.tags = arr.filter { !$0.isEmpty }
-                }
-            ))
-        }
-    }
-    
-    func socialLinksSection() -> some View {
-        Section("Social Network Links") {
-            ForEach(Array(profile.socialLinks.keys), id: \.self) { key in
-                HStack {
-                    Text(key)
-                    Spacer()
-                    Text(profile.socialLinks[key] ?? "")
-                        .foregroundColor(.secondary)
-                }
-            }
-            Button("Add Link") {}
-        }
-    }
-    
-    func lmStudioSection() -> some View {
-        Section("LM Studio") {
-            Button("Viewer Section") { showingViewerStudio = true }
-            Button("Creator Section") { showingCreatorStudio = true }
-            Button("Gamer Section") { showingGamerStudio = true }
-            Button("Community Section") { showingCommunityStudio = true }
-        }
-    }
-    
-    func businessStudioSection() -> some View {
-        Section("Business Studio") {
-            Button("Team Section") { showingTeamStudio = true }
-            Button("Agency / Creator Network Section") { showingAgencyCreatorNetworkStudio = true }
-            Button("Scouter Section (Coming Soon)") {}
-                .disabled(true)
-        }
-    }
-}
-
-// MARK: - Save & Password
-@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-private extension EditProfileView {
+extension EditProfileView {
     func passwordChangeSheet() -> some View {
         NavigationView {
             Form {
-                Section(header: Text("Enter New Password")) {
+                Section("Enter New Password") {
                     SecureField("New Password", text: $newPassword)
                     SecureField("Confirm New Password", text: $confirmNewPassword)
                 }
@@ -375,9 +330,11 @@ private extension EditProfileView {
     func saveProfile() {
         savingInProgress = true
         
+        // If uploading a new profile picture
         if let newPic = newProfileImage {
             uploadImage(newPic, path: "profileImages") { url in
                 profile.profilePictureURL = url
+                // Then banner if needed
                 if let newBan = newBannerImage {
                     uploadImage(newBan, path: "bannerImages") { bUrl in
                         profile.bannerURL = bUrl
@@ -388,11 +345,13 @@ private extension EditProfileView {
                 }
             }
         } else if let newBan = newBannerImage {
+            // Only uploading banner
             uploadImage(newBan, path: "bannerImages") { bUrl in
                 profile.bannerURL = bUrl
                 finalizeSave()
             }
         } else {
+            // No images changed
             finalizeSave()
         }
     }
@@ -403,8 +362,8 @@ private extension EditProfileView {
             dismiss()
             return
         }
-        let ref = Firestore.firestore().collection("users").document(uid)
         
+        let ref = Firestore.firestore().collection("users").document(uid)
         do {
             try ref.setData(from: profile, merge: true) { _ in
                 savingInProgress = false
@@ -442,7 +401,7 @@ private extension EditProfileView {
 
 // MARK: - Helpers & Bindings
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
-private extension EditProfileView {
+extension EditProfileView {
     func bindingForNonOptional(_ keyPath: WritableKeyPath<MyUserProfile, String>) -> Binding<String> {
         Binding<String>(
             get: { profile[keyPath: keyPath] },
@@ -480,6 +439,8 @@ private extension EditProfileView {
     func uiColorFromHex(_ hex: String) -> UIColor? {
         var h = hex
         if h.hasPrefix("#") { h.removeFirst() }
+        
+        // e.g. #F3A => #FF33AA
         if h.count == 3 {
             h = h.map { "\($0)\($0)" }.joined()
         }
@@ -504,7 +465,7 @@ private extension EditProfileView {
     func hexFromColor(_ color: Color) -> String {
         let ui = UIColor(color)
         var rF: CGFloat = 0, gF: CGFloat = 0, bF: CGFloat = 0, aF: CGFloat = 0
-        guard ui.getRed(&rF, green: &gF, blue: &bF, alpha: &aF) else { return "#0000FF" }
+        ui.getRed(&rF, green: &gF, blue: &bF, alpha: &aF)
         
         let r = Int(rF * 255)
         let g = Int(gF * 255)
@@ -512,9 +473,18 @@ private extension EditProfileView {
         
         return String(format: "#%02X%02X%02X", r, g, b)
     }
+    
+    func openVerificationForm() {
+        guard let url = URL(string: "https://forms.gle/F2mcUX597PyYiJDm6") else { return }
+        UIApplication.shared.open(url)
+    }
     #else
-    var clanColorBinding: Binding<Color> {
-        .constant(.blue)
+    var clanColorBinding: Binding<Color> { .constant(.blue) }
+    
+    func openVerificationForm() {
+        if let url = URL(string: "https://forms.gle/F2mcUX597PyYiJDm6") {
+            NSWorkspace.shared.open(url)
+        }
     }
     #endif
 }

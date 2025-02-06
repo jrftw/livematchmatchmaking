@@ -1,40 +1,57 @@
+// MARK: - DirectMessagesListView.swift
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
+// MARK: - Model
+@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+struct ChatPartner: Identifiable, Hashable {
+    var id: String
+    var username: String
+}
+
+// MARK: - ViewModel
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 final class DirectMessagesListViewModel: ObservableObject {
-    @Published var recentChats: [String] = []
+    @Published var recentChats: [ChatPartner] = []
     private let db = FirebaseManager.shared.db
     
     func fetchRecentChats() {
         guard let currentUser = Auth.auth().currentUser else { return }
         
-        // Listen for DMs where the current user is the "fromUserID"
         db.collection("dms")
             .whereField("fromUserID", isEqualTo: currentUser.uid)
-            .addSnapshotListener { snap, _ in
-                guard let docs = snap?.documents else { return }
+            .addSnapshotListener { [weak self] snap, _ in
+                guard let self = self, let docs = snap?.documents else { return }
                 
                 let userIDs = docs.compactMap { $0.data()["toUserID"] as? String }
+                let uniqueUserIDs = Array(Set(userIDs))
                 
-                // Also, if you want to see DMs where the user is "toUserID",
-                // you'd do a separate query or a different approach.
-                // Or you can unify them with .whereField("fromUserID", in: [currentUser.uid, ...]) if you want two-sided listing.
+                var loadedChats: [ChatPartner] = []
+                let group = DispatchGroup()
                 
-                // For now, just store unique userIDs
-                self.recentChats = Array(Set(userIDs))
+                for userID in uniqueUserIDs {
+                    group.enter()
+                    self.db.collection("users").document(userID).getDocument { docSnap, err in
+                        defer { group.leave() }
+                        guard err == nil, let doc = docSnap, doc.exists,
+                              let data = doc.data(),
+                              let username = data["username"] as? String
+                        else { return }
+                        
+                        loadedChats.append(ChatPartner(id: userID, username: username))
+                    }
+                }
+                
+                group.notify(queue: .main) {
+                    self.recentChats = loadedChats
+                }
             }
     }
     
-    // Example: remove the DM documents in Firestore for that user
-    // or just remove from the local array if you prefer.
     func deleteChat(with partnerID: String) {
         guard let currentUser = Auth.auth().currentUser else { return }
         
-        // This example removes *all* DM docs where fromUser = currentUser
-        // and toUser = partnerID. Adjust if you also want to remove docs
-        // where fromUser = partnerID, toUser = currentUser, etc.
         let query = db.collection("dms")
             .whereField("fromUserID", isEqualTo: currentUser.uid)
             .whereField("toUserID", isEqualTo: partnerID)
@@ -55,6 +72,7 @@ final class DirectMessagesListViewModel: ObservableObject {
     }
 }
 
+// MARK: - View
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 struct DirectMessagesListView: View {
     @StateObject private var vm = DirectMessagesListViewModel()
@@ -62,16 +80,15 @@ struct DirectMessagesListView: View {
     
     var body: some View {
         List {
-            ForEach(vm.recentChats, id: \.self) { userID in
-                NavigationLink(destination: DirectMessageChatView(chatPartnerID: userID)) {
-                    Text("Chat with: \(userID)")
+            ForEach(vm.recentChats) { partner in
+                NavigationLink(destination: DirectMessageChatView(chatPartnerID: partner.id)) {
+                    Text(partner.username)
                 }
             }
             .onDelete { indexSet in
-                // Remove from local array, optionally also from Firestore
                 for idx in indexSet {
-                    let partnerID = vm.recentChats[idx]
-                    vm.deleteChat(with: partnerID) // optional
+                    let partner = vm.recentChats[idx]
+                    vm.deleteChat(with: partner.id)
                 }
                 vm.recentChats.remove(atOffsets: indexSet)
             }
@@ -89,12 +106,8 @@ struct DirectMessagesListView: View {
         }
         .sheet(isPresented: $showingNewDM) {
             CreateDirectMessageView { partnerID in
-                // After user picks a partner, you can either:
-                // - Force immediate navigation to that DM
-                // - Just do nothing and let them see it in the list next time
-                // For example, you can manually add it to the list:
-                if !vm.recentChats.contains(partnerID) {
-                    vm.recentChats.append(partnerID)
+                if !vm.recentChats.contains(where: { $0.id == partnerID }) {
+                    vm.recentChats.append(ChatPartner(id: partnerID, username: partnerID))
                 }
             }
         }

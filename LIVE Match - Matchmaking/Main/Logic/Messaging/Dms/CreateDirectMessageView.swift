@@ -20,7 +20,6 @@ final class DirectMessageUserSearchViewModel: ObservableObject {
             var loaded: [UserProfile] = []
             for doc in docs {
                 if let user = try? doc.data(as: UserProfile.self) {
-                    // Exclude the current user from results if you prefer
                     if user.id != Auth.auth().currentUser?.uid {
                         loaded.append(user)
                     }

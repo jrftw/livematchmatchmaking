@@ -9,6 +9,7 @@
 // Displays the EULA and requires acceptance before showing main content.
 
 import SwiftUI
+import WebKit
 
 // MARK: - EULAViolationPolicy
 public let eulaText = """
@@ -21,21 +22,45 @@ LIVE Match - Matchmaking Terms of Use - EULA
 For more details, read our Terms & Conditions below.
 """
 
+// MARK: - InAppWebView
+@available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
+public struct InAppWebView: UIViewRepresentable {
+    public let url: URL
+    
+    public init(url: URL) {
+        self.url = url
+    }
+    
+    public func makeUIView(context: Context) -> WKWebView {
+        WKWebView()
+    }
+    
+    public func updateUIView(_ uiView: WKWebView, context: Context) {
+        let request = URLRequest(url: url)
+        uiView.load(request)
+    }
+}
+
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct EULAView: View {
+    @Environment(\.dismiss) private var dismiss
     @AppStorage("didAcceptEULA") private var didAcceptEULA = false
+    @State private var showTerms = false
     
     public init() {}
     
+    // MARK: - Body
     public var body: some View {
         ZStack {
-            LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)]),
-                           startPoint: .topLeading,
-                           endPoint: .bottomTrailing)
-                .edgesIgnoringSafeArea(.all)
+            LinearGradient(
+                gradient: Gradient(colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 20) {
-                Text("Welcome to LIVE Match!")
+                Text("LIVE Match - Matchmaker - EULA!")
                     .font(.largeTitle)
                     .bold()
                     .foregroundColor(.white)
@@ -48,13 +73,15 @@ public struct EULAView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal)
                         
-                        Link(destination: URL(string: "https://infinitumlive.com/live-match-matchmaking-app/")!) {
+                        Button(action: {
+                            showTerms = true
+                        }) {
                             Text("Read Full Terms & Conditions")
                                 .font(.body)
                                 .underline()
                                 .foregroundColor(.yellow)
+                                .padding(.horizontal)
                         }
-                        .padding(.horizontal)
                     }
                 }
                 .padding(.vertical, 10)
@@ -63,6 +90,7 @@ public struct EULAView: View {
                 
                 Button(action: {
                     didAcceptEULA = true
+                    dismiss()
                 }) {
                     Text("I Agree")
                         .font(.headline)
@@ -75,6 +103,9 @@ public struct EULAView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 40)
             }
+        }
+        .sheet(isPresented: $showTerms) {
+            InAppWebView(url: URL(string: "https://infinitumlive.com/live-match-matchmaking-app/")!)
         }
     }
 }
