@@ -1,7 +1,4 @@
-// MARK: File: StoreKitHelperView.swift
-// MARK: iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// View that displays subscription requirement for certain account types.
-
+// MARK: - StoreKitHelperView.swift
 import SwiftUI
 
 public struct StoreKitHelperView: View {

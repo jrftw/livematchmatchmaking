@@ -12,8 +12,6 @@ final class StoreKitHelper: ObservableObject {
     // MARK: - Product IDs
     private let removeAdsProductID = "com.Infinitum.imagery.llc.LIVEMatch.removeads.monthly"
     private let templateSubscriptionProductID = "com.Infinitum.imagery.llc.LIVEMatch.templates.monthly"
-    
-    // If you have other products, list them here:
     private let teamPlanProductID = "com.example.LIVEMatch.team"
     private let agencyPlanProductID = "com.example.LIVEMatch.agency"
     private let scouterPlanProductID = "com.example.LIVEMatch.scouter"
@@ -21,6 +19,7 @@ final class StoreKitHelper: ObservableObject {
     // MARK: - StoreKit 2 References
     private var removeAdsProduct: Product?
     private var templateSubscriptionProduct: Product?
+    private var scouterSubscriptionProduct: Product?
     
     // MARK: - Singleton
     static let shared = StoreKitHelper()
@@ -36,7 +35,6 @@ final class StoreKitHelper: ObservableObject {
         for await result in Transaction.updates {
             do {
                 let transaction = try checkVerified(result)
-                // Optionally update internal state here if needed.
                 await transaction.finish()
             } catch {
                 print("Transaction verification failed: \(error)")
@@ -62,6 +60,8 @@ final class StoreKitHelper: ObservableObject {
                     removeAdsProduct = product
                 case templateSubscriptionProductID:
                     templateSubscriptionProduct = product
+                case scouterPlanProductID:
+                    scouterSubscriptionProduct = product
                 default:
                     break
                 }
@@ -145,6 +145,43 @@ final class StoreKitHelper: ObservableObject {
         }
     }
     
+    // MARK: - Purchase Scouter Subscription
+    func purchaseScouterSubscription(completion: @escaping (Bool) -> Void) {
+        purchaseInProgress = true
+        lastPurchaseSuccess = false
+        
+        guard let product = scouterSubscriptionProduct else {
+            print("Scouter product not loaded. Cannot proceed with purchase.")
+            purchaseInProgress = false
+            completion(false)
+            return
+        }
+        
+        Task {
+            do {
+                let result = try await product.purchase()
+                switch result {
+                case .success(let verification):
+                    let transaction = try checkVerified(verification)
+                    finish(transaction: transaction)
+                    purchaseInProgress = false
+                    lastPurchaseSuccess = true
+                    completion(true)
+                case .userCancelled, .pending:
+                    purchaseInProgress = false
+                    completion(false)
+                @unknown default:
+                    purchaseInProgress = false
+                    completion(false)
+                }
+            } catch {
+                print("Purchase error: \(error.localizedDescription)")
+                purchaseInProgress = false
+                completion(false)
+            }
+        }
+    }
+    
     // MARK: - Restore Purchases
     @MainActor
     func restorePurchases() async -> Bool {
@@ -155,7 +192,8 @@ final class StoreKitHelper: ObservableObject {
             for await result in Transaction.currentEntitlements {
                 if case .verified(let transaction) = result {
                     if transaction.productID == removeAdsProductID ||
-                       transaction.productID == templateSubscriptionProductID {
+                       transaction.productID == templateSubscriptionProductID ||
+                       transaction.productID == scouterPlanProductID {
                         foundSubscription = true
                     }
                 }

@@ -1,4 +1,5 @@
 // FILE: PlatformDetailView.swift
+// File is for gaming details 
 // UPDATED FILE
 
 import SwiftUI
@@ -23,7 +24,7 @@ public struct PlatformDetailView: View {
                     FillInBracketFinderView()
                 }
             }
-            Section(header: Text("Build Brackets")) {
+            Section(header: Text("Build Brackets (Manually)")) {
                 NavigationLink("CN Internal Bracket") {
                     AdvancedBracketCreationView(
                         title: "CN Internal Bracket",

@@ -22,7 +22,7 @@ public struct StreamingPlatformDetailView: View {
                     FillInBracketFinderView()
                 }
             }
-            Section(header: Text("Build Brackets")) {
+            Section(header: Text("Build Brackets (Manually)")) {
                 NavigationLink("CN Internal Bracket") {
                     AdvancedBracketCreationView(
                         title: "CN Internal Bracket",

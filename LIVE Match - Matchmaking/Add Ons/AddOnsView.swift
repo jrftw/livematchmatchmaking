@@ -6,6 +6,7 @@ import StoreKit
 public struct AddOnsView: View {
     @State private var isPurchasingRemoveAds = false
     @State private var isPurchasingTemplates = false
+    @State private var isPurchasingScouter = false
     @State private var purchaseStatusMessage = ""
     
     public init() {}
@@ -15,6 +16,7 @@ public struct AddOnsView: View {
             Section(header: Text("Subscriptions")) {
                 removeAdsRow
                 templateSubscriptionRow
+                scouterSubscriptionRow
             }
             
             Section {
@@ -26,6 +28,12 @@ public struct AddOnsView: View {
                         : "No previous subscription found or restore failed."
                     }
                 }
+            }
+            
+            Section(header: Text("What is each Add-On")) {
+                Text("• Remove Ads – Completely remove ads throughout the app for an uninterrupted experience.")
+                Text("• Templates – Unlock all match templates for creating and organizing tournaments easily.")
+                Text("• Scouter – Discover and recruit Creators who are currently unaffiliated with agencies or networks. (Coming Soon)")
             }
         }
         .navigationTitle("Add-Ons")
@@ -89,6 +97,33 @@ public struct AddOnsView: View {
                         isPurchasingTemplates = false
                         purchaseStatusMessage = success
                         ? "Templates subscription active."
+                        : "Purchase failed or was cancelled."
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+    }
+    
+    private var scouterSubscriptionRow: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text("Scouter (Weekly)")
+                    .font(.headline)
+                Text("$9.99 / week")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            if isPurchasingScouter {
+                ProgressView()
+            } else {
+                Button("Subscribe") {
+                    isPurchasingScouter = true
+                    StoreKitHelper.shared.purchaseScouterSubscription { success in
+                        isPurchasingScouter = false
+                        purchaseStatusMessage = success
+                        ? "Scouter subscription active."
                         : "Purchase failed or was cancelled."
                     }
                 }

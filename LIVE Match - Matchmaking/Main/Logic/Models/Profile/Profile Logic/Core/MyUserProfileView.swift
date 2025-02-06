@@ -1,4 +1,4 @@
-// MARK: MyUserProfileView.swift
+// MARK: - MyUserProfileView.swift
 // Uses MyUserProfile to display banner & avatar, stats, etc.
 
 import SwiftUI
@@ -13,6 +13,10 @@ public struct MyUserProfileView: View {
     @State private var showingManageAccountSheet = false
     @State private var currentWins: Int
     @State private var currentLosses: Int
+    
+    // MARK: - Follow / Message
+    @State private var isFollowing = false
+    @State private var showingDMChat = false
     
     private var isCurrentUser: Bool {
         guard let currentUID = Auth.auth().currentUser?.uid else { return false }
@@ -85,7 +89,13 @@ public struct MyUserProfileView: View {
                 .offset(y: -65)
                 .padding(.bottom, -65)
                 
-                // MARK: - Clan Tag + Username
+                // MARK: (1) Display Name
+                Text(profile.displayName.isEmpty ? "Unknown" : profile.displayName)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .padding(.top, 8)
+                
+                // MARK: (2) Clan Tag + Username
                 VStack(spacing: 4) {
                     if let clan = profile.clanTag, !clan.isEmpty {
                         Text("\(clan) @\(profile.username)")
@@ -100,18 +110,12 @@ public struct MyUserProfileView: View {
                 }
                 .padding(.top, 8)
                 
-                // MARK: - Bio
+                // MARK: (3) Bio
                 if let b = profile.bio, !b.isEmpty {
                     Text(b)
                         .font(.body)
                         .padding(.top, 4)
                 }
-                
-                // MARK: - Display Name
-                Text(profile.displayName.isEmpty ? "Unknown" : profile.displayName)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .padding(.top, 8)
                 
                 // MARK: - Followers / Following
                 HStack(spacing: 32) {
@@ -156,8 +160,22 @@ public struct MyUserProfileView: View {
         .sheet(isPresented: $showingManageAccountSheet) {
             ManageAccountView()
         }
+        // Show DM Chat if the user taps "Message"
+        .sheet(isPresented: $showingDMChat) {
+            if let partnerID = profile.id {
+                NavigationView {
+                    DirectMessageChatView(chatPartnerID: partnerID)
+                }
+            }
+        }
         .navigationTitle("My Profile")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Check if we are already following (only if not current user)
+            if !isCurrentUser {
+                checkIfFollowing()
+            }
+        }
     }
 }
 
@@ -245,7 +263,7 @@ extension MyUserProfileView {
                 .cornerRadius(8)
                 
                 Button("Share") {
-                    // share logic
+                    shareUserProfile()
                 }
                 .font(.headline)
                 .padding()
@@ -253,17 +271,18 @@ extension MyUserProfileView {
                 .foregroundColor(.white)
                 .cornerRadius(8)
             } else {
-                Button("Follow") {
-                    // follow logic
+                // Show Follow/Unfollow
+                Button(isFollowing ? "Unfollow" : "Follow") {
+                    toggleFollow()
                 }
                 .font(.headline)
                 .padding()
-                .background(Color.blue.opacity(0.8))
+                .background(isFollowing ? Color.red.opacity(0.8) : Color.blue.opacity(0.8))
                 .foregroundColor(.white)
                 .cornerRadius(8)
                 
                 Button("Message") {
-                    // message logic
+                    showingDMChat = true
                 }
                 .font(.headline)
                 .padding()
@@ -272,6 +291,69 @@ extension MyUserProfileView {
                 .cornerRadius(8)
             }
         }
+    }
+    
+    // MARK: Follow Checking / Toggling
+    private func checkIfFollowing() {
+        guard let currentUserID = Auth.auth().currentUser?.uid,
+              let targetUserID = profile.id else {
+            isFollowing = false
+            return
+        }
+        let followingRef = db.collection("users")
+            .document(currentUserID)
+            .collection("following")
+            .document(targetUserID)
+        
+        followingRef.getDocument { snap, error in
+            if let error = error {
+                print("checkIfFollowing error: \(error.localizedDescription)")
+                return
+            }
+            // If doc exists, we are following
+            isFollowing = snap?.exists ?? false
+        }
+    }
+    
+    private func toggleFollow() {
+        guard let targetUserID = profile.id else { return }
+        
+        if isFollowing {
+            // Unfollow
+            FollowService.shared.unfollowUser(targetUserId: targetUserID) { success in
+                if success {
+                    isFollowing = false
+                }
+            }
+        } else {
+            // Follow
+            FollowService.shared.followUser(targetUserId: targetUserID) { success in
+                if success {
+                    isFollowing = true
+                }
+            }
+        }
+    }
+    
+    // MARK: Share Profile
+    private func shareUserProfile() {
+        let shareText = """
+        Check it out on LIVE Match - Matchmaking, download it now \
+        https://apps.apple.com/us/app/live-match-matchmaking/id6741120410
+        """
+        #if os(iOS)
+        guard
+            let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+            let window = scene.windows.first,
+            let rootVC = window.rootViewController
+        else { return }
+        
+        let activityVC = UIActivityViewController(
+            activityItems: [shareText],
+            applicationActivities: nil
+        )
+        rootVC.present(activityVC, animated: true)
+        #endif
     }
     
     // MARK: Extra Info
