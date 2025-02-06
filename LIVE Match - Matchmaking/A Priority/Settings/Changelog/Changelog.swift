@@ -105,17 +105,13 @@ public struct Changelog {
                 "Expanded daily login tracking with a dedicated user progress log in the background, capturing more session data for analytics."
             ]
         ),
-        // MARK: Build 9
+        // MARK: Version 1.01 Build 1
         ChangelogEntry(
-            version: "1.0",
-            build: "9",
+            version: "1.01",
+            build: "1",
             releaseDate: "2/6/25",
             changes: [
-                "Deployed a new tournament scoreboard that updates in real-time across all connected devices.",
-                "Refined availability scheduling, making it simpler to view and edit multi-day brackets.",
-                "Enhanced bracket cancellation logic to handle last-minute player dropouts gracefully.",
-                "Added new advanced analytics for community managers, tracking average match durations, peak concurrency, and user retention metrics.",
-                "Fixed several UI alignment issues on iPhone SE and iPhone Mini devices, improving readability in smaller form factors."
+                "Initial release for 1.01."
             ]
         )
     ]
