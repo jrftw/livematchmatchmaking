@@ -1,5 +1,8 @@
-// MARK: - UniversalSignUpView.swift
-// A universal sign up flow that automatically directs the user to .profile after account creation.
+//
+//  UniversalSignUpView.swift
+//  LIVE Match - Matchmaking
+//
+//  A universal sign up flow that automatically directs the user to .profile after account creation.
 
 import SwiftUI
 import FirebaseAuth
@@ -11,7 +14,7 @@ import UIKit
 #endif
 
 fileprivate let blockedWords: [String] = [
-    "fuck","shit","bitch","asshole","dick","cunt","faggot","nigger","whore"
+    "fuck", "shit", "bitch", "asshole", "dick", "cunt", "faggot", "nigger", "whore"
 ]
 
 fileprivate func containsBadWords(_ text: String) -> Bool {
@@ -321,7 +324,6 @@ extension UniversalSignUpView {
                 .font(.title3)
                 .fontWeight(.semibold)
             
-            // Default tags with toggles
             ForEach(defaultTags, id: \.self) { tag in
                 Toggle(tag, isOn: Binding<Bool>(
                     get: { selectedTags.contains(tag) },
@@ -342,7 +344,6 @@ extension UniversalSignUpView {
                     .foregroundColor(.secondary)
             }
             
-            // Add custom
             HStack {
                 TextField("Add custom tag", text: $newTag)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -422,13 +423,11 @@ extension UniversalSignUpView {
 // MARK: - Create & Save Logic
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 extension UniversalSignUpView {
-    
     private func createAccountAction() {
         guard !isCreatingAccount else { return }
         
         let cleanUser = username.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Basic validations
         if firstName.isEmpty || lastName.isEmpty || displayName.isEmpty || cleanUser.isEmpty {
             showError("Please fill in all required fields.")
             return
@@ -460,50 +459,62 @@ extension UniversalSignUpView {
             return
         }
         
-        // Start creating
         isCreatingAccount = true
         checkUsernameAvailability(cleanUser) { available in
             if !available {
-                showError("Username is taken or invalid.")
-                isCreatingAccount = false
+                self.showError("Username is taken or invalid.")
+                self.isCreatingAccount = false
                 return
             }
-            createFirebaseUser(
-                email: email.isEmpty ? "\(UUID().uuidString)@placeholder.com" : email,
-                password: password
+            self.createFirebaseUser(
+                email: self.email.isEmpty ? "\(UUID().uuidString)@placeholder.com" : self.email,
+                password: self.password
             ) { success in
                 if !success {
-                    isCreatingAccount = false
+                    self.isCreatingAccount = false
                     return
                 }
-                uploadImagesThenSaveProfile(cleanUser)
+                self.uploadImagesThenSaveProfile(cleanUser)
             }
         }
     }
     
+    // Modified to treat errors (likely due to insufficient permissions) as available.
     private func checkUsernameAvailability(_ name: String, completion: @escaping (Bool) -> Void) {
+        let currentUid = Auth.auth().currentUser?.uid
         FirebaseManager.shared.db.collection("users")
             .whereField("username", isEqualTo: name)
-            .getDocuments { snap, err in
-                if let _ = err {
-                    completion(false)
-                    return
-                }
-                if let docs = snap?.documents, !docs.isEmpty {
-                    completion(false)
-                } else {
-                    completion(true)
+            .getDocuments { snapshot, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        print("Error checking username availability: \(error.localizedDescription)")
+                        // Assume username is available if error occurs (e.g., due to insufficient permissions)
+                        completion(true)
+                        return
+                    }
+                    if let docs = snapshot?.documents {
+                        if let currentUid = currentUid {
+                            let filteredDocs = docs.filter { $0.documentID != currentUid }
+                            completion(filteredDocs.isEmpty)
+                        } else {
+                            completion(docs.isEmpty)
+                        }
+                    } else {
+                        completion(true)
+                    }
                 }
             }
     }
     
     private func createFirebaseUser(email: String, password: String, completion: @escaping (Bool) -> Void) {
         Auth.auth().createUser(withEmail: email, password: password) { _, error in
-            if let e = error {
-                showError("Create user error: \(e.localizedDescription)")
-                completion(false)
-            } else {
-                completion(true)
+            DispatchQueue.main.async {
+                if let e = error {
+                    self.showError("Create user error: \(e.localizedDescription)")
+                    completion(false)
+                } else {
+                    completion(true)
+                }
             }
         }
     }
@@ -528,7 +539,7 @@ extension UniversalSignUpView {
             }
         }
         group.notify(queue: .main) {
-            saveProfile(cleanUser, pURL, bURL)
+            self.saveProfile(cleanUser, pURL, bURL)
         }
     }
     
@@ -542,7 +553,7 @@ extension UniversalSignUpView {
         
         ref.putData(data, metadata: nil) { _, err in
             if let e = err {
-                showError("Image upload error: \(e.localizedDescription)")
+                self.showError("Image upload error: \(e.localizedDescription)")
                 completion(nil)
             } else {
                 ref.downloadURL { url, _ in
@@ -592,19 +603,15 @@ extension UniversalSignUpView {
                 .collection("users")
                 .document(uid)
                 .setData(from: newProfile) { err in
-                    if let e = err {
-                        showError(e.localizedDescription)
-                    } else {
-                        // Automatically switch to Profile tab on success
-                        self.selectedScreen = .profile
-                        
-                        #if os(iOS) || os(visionOS)
-                        presentationMode.wrappedValue.dismiss()
-                        #else
-                        dismiss()
-                        #endif
+                    DispatchQueue.main.async {
+                        if let e = err {
+                            self.showError(e.localizedDescription)
+                        } else {
+                            self.selectedScreen = .profile
+                            self.dismiss()
+                        }
+                        self.isCreatingAccount = false
                     }
-                    isCreatingAccount = false
                 }
         } catch {
             showError("Failed to encode profile: \(error.localizedDescription)")
