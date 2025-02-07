@@ -14,10 +14,10 @@ import SwiftUI
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct AppVersion {
     // MARK: - Static Version & Build
-    public static let currentVersion: String = "1.01"
+    public static let currentVersion: String = "1.02"
     public static let currentBuild: String = "1"
     
-    private static let requiredVersion: String = "1.01"
+    private static let requiredVersion: String = "1.02"
     private static let requiredBuild: String = "1"
     
     // MARK: - isVersionValid
