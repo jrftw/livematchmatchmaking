@@ -9,6 +9,16 @@ import Foundation
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct Changelog {
     public static let entries: [ChangelogEntry] = [
+        // MARK: Version 1.03 Build 1
+        ChangelogEntry(
+            version: "1.03",
+            build: "1",
+            releaseDate: "2/8/25",
+            changes: [
+                "Improved stability and responsiveness during heavy bracket updates.",
+                "Fixed minor bugs reported in version 1.02 regarding user sign-up flow and UI glitches."
+            ]
+        ),
         // MARK: Version 1.02 Build 1
         ChangelogEntry(
             version: "1.02",
@@ -16,7 +26,7 @@ public struct Changelog {
             releaseDate: "2/7/25",
             changes: [
                 "Introduced new advanced bracket filtering options, letting organizers refine participant pools by skill or region.",
-                "Optimized bracket analytics for large-scale events (1000+ participants) with improved performance.",
+                "Fixed an issue where signing up would not process correctly.",
                 "Extended cross-platform chat presence detection (now updates your status across iOS, macOS, and visionOS in near real time).",
                 "Fixed minor UI alignment issues on certain iPad split-screen configurations.",
                 "Further polished memory usage, ensuring stable performance even during heavy bracket updates."
