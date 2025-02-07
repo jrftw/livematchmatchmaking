@@ -1,5 +1,9 @@
-// FILE: FillInBracketFinderView.swift
-// UPDATED FILE
+// MARK: FillInBracketFinderView.swift
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// -------------------------------------------------------
+// This view fetches available Fill-In brackets for users to select and fill.
+// Ensures that brackets remain visible even after a user joins.
+// Users will navigate to FillInBracketSlotsView to fill slots.
 
 import SwiftUI
 import FirebaseAuth
@@ -53,10 +57,8 @@ final class FillInBracketFinderViewModel: ObservableObject {
             return
         }
         
-        // If user is logged in, we can do more complex checks if needed.
-        // For now, we fetch all 'isPublic = true' plus maybe user belongs to an agency/CN.
-        // Basic approach: fetch all documents, filter in code. For bigger data, do separate queries.
-        
+        // For a logged-in user, we can do more complex checks. Basic approach:
+        // fetch all documents, then filter in code. For large data, do separate queries.
         db.collection("fillInBrackets")
             .getDocuments { snapshot, error in
                 if let error = error {
@@ -69,21 +71,14 @@ final class FillInBracketFinderViewModel: ObservableObject {
                         try doc.data(as: FillInBracketDoc.self)
                     }
                     DispatchQueue.main.async {
-                        // If bracket is public => show to all users
-                        // If bracket is private => only show if user in same agency or CN
-                        // (This is a placeholder; replace with your real logic)
-                        
                         let filtered = items.filter { bracket in
                             if bracket.isPublic {
                                 return true
                             } else {
-                                // PRIVATE bracket => check user role, agency, or CN
-                                // Replace "isInAgencyOrCN" with real logic, e.g.:
-                                // isInAgencyOrCN(user) => bracket is visible
+                                // PRIVATE bracket => check user role, agency, or CN.
                                 return self.isInAgencyOrCN(user, bracket)
                             }
                         }
-                        
                         self.brackets = filtered
                     }
                 } catch {
@@ -115,10 +110,9 @@ final class FillInBracketFinderViewModel: ObservableObject {
             }
     }
     
-    // Example placeholder: Return true if user is part of the bracket's agency/CN
+    // Placeholder membership check
     private func isInAgencyOrCN(_ user: User, _ bracket: FillInBracketDoc) -> Bool {
-        // Replace with real membership checks, e.g. user has "agencyID" that matches bracket doc
-        // or user has "creatorNetworkID" that matches bracket doc, etc.
+        // Replace with real membership checks
         return false
     }
 }

@@ -1,4 +1,4 @@
-// MARK: - MyUserProfileView.swift
+// MARK: MyUserProfileView.swift
 // Uses MyUserProfile to display banner & avatar, stats, etc.
 
 import SwiftUI
@@ -136,8 +136,10 @@ public struct MyUserProfileView: View {
                 }
                 .padding(.top, 8)
                 
-                // MARK: - Win / Lose Stats
-                winLoseSection()
+                // MARK: - Win / Lose Stats (conditional)
+                if isCurrentUser || profile.showWinLossPublicly {
+                    winLoseSection()
+                }
                 
                 // MARK: - Button Row
                 buttonRow()

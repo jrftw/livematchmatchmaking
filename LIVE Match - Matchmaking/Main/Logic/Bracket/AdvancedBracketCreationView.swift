@@ -1,11 +1,8 @@
 // MARK: AdvancedBracketCreationView.swift
-
-//
-//  AdvancedBracketCreationView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// -------------------------------------------------------
+// Allows users to create an advanced bracket.
+// After tapping "Create Bracket", we save to Firestore and dismiss the screen.
 
 import SwiftUI
 import FirebaseFirestore
@@ -28,8 +25,14 @@ public struct AdvancedBracketCreationView: View {
     @State private var maxUsers: Int?
     
     @State private var showCSVImporter = false
+    
+    // The final array of *real* BracketEntry objects
     @State private var entries: [BracketEntry] = []
+    
     @State private var showTimezonePicker = false
+    
+    // MARK: - Dismiss
+    @Environment(\.dismiss) private var dismiss
     
     public init(title: String, platform: LivePlatformOption) {
         self.title = title
@@ -93,12 +96,15 @@ public struct AdvancedBracketCreationView: View {
         #endif
         .onAppear { fetchBracketCreatorName() }
         .sheet(isPresented: $showCSVImporter) {
-            CSVImporterView { importedEntries in
-                entries.append(contentsOf: importedEntries)
+            // CSVImporterView now returns [CSVBracketEntry], so we convert each to BracketEntry
+            CSVImporterView { importedCSVEntries in
+                let converted = importedCSVEntries.map { $0.convertToBracketEntry() }
+                entries.append(contentsOf: converted)
             }
         }
     }
     
+    // MARK: - Load Bracket Creator
     private func fetchBracketCreatorName() {
         guard let uid = Auth.auth().currentUser?.uid else {
             bracketCreator = "Guest or Unknown"
@@ -127,16 +133,16 @@ public struct AdvancedBracketCreationView: View {
         }
     }
     
+    // MARK: - Add Entry Manually
     private func addManualEntry() {
+        // timesByDay is empty dictionary by default
         let newEntry = BracketEntry(
             username: "",
             email: "",
             phone: "",
             platformUsername: "",
             discordUsername: "",
-            daysOfWeekAvailable: [],
-            timesAvailable: "",
-            timezone: bracketTimezone,
+            timesByDay: [:],
             networkOrAgency: nil,
             maxBracketMatches: 5,
             maxMatchesPerDay: 2,
@@ -148,6 +154,7 @@ public struct AdvancedBracketCreationView: View {
         entries.append(newEntry)
     }
     
+    // MARK: - Create Bracket
     private func createBracket() {
         let bracketDoc: [String: Any] = [
             "title": title,
@@ -168,11 +175,50 @@ public struct AdvancedBracketCreationView: View {
                 print("Error creating bracket: \(err.localizedDescription)")
             } else {
                 print("Bracket created successfully!")
+                // Dismiss the screen after successful creation
+                dismiss()
             }
         }
     }
     
+    // MARK: - Share Bracket
     private func shareBracket() {
         print("Sharing bracket with external apps… (placeholder)")
+    }
+}
+
+extension BracketEntry {
+    // Provide a dictionary for Firestore or others
+    func toDictionary() -> [String: Any] {
+        // timesByDay is a dictionary of [String : [TimeRange]]
+        // If you want to encode [TimeRange] as JSON, do so.
+        // Example approach (very simple) – you might prefer custom logic:
+        
+        let timesByDayJSON = timesByDay.mapValues { ranges in
+            ranges.map { range -> [String: Any] in
+                [
+                    "id": range.id.uuidString,
+                    "start": range.start,
+                    "end": range.end
+                ]
+            }
+        }
+        
+        return [
+            "id": id.uuidString,
+            "username": username,
+            "email": email,
+            "phone": phone,
+            "platformUsername": platformUsername,
+            "discordUsername": discordUsername,
+            "timesByDay": timesByDayJSON,
+            "networkOrAgency": networkOrAgency as Any,
+            "maxBracketMatches": maxBracketMatches,
+            "maxMatchesPerDay": maxMatchesPerDay,
+            "averageDiamondAmount": averageDiamondAmount as Any,
+            "preferredOpponents": preferredOpponents,
+            "excludedOpponents": excludedOpponents,
+            "additionalNotes": additionalNotes
+        ]
     }
 }

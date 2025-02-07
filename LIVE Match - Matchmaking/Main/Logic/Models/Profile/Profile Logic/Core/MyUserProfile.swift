@@ -39,6 +39,9 @@ public struct MyUserProfile: Codable, Identifiable {
     
     public var location: String?
     
+    // Controls whether the user’s Win/Loss stats are publicly visible
+    public var showWinLossPublicly: Bool
+    
     public init(
         id: String? = nil,
         firstName: String,
@@ -63,7 +66,8 @@ public struct MyUserProfile: Codable, Identifiable {
         followingCount: Int = 0,
         wins: Int = 0,
         losses: Int = 0,
-        location: String? = nil
+        location: String? = nil,
+        showWinLossPublicly: Bool = false
     ) {
         self.id = id
         self.firstName = firstName
@@ -89,5 +93,6 @@ public struct MyUserProfile: Codable, Identifiable {
         self.wins = wins
         self.losses = losses
         self.location = location
+        self.showWinLossPublicly = showWinLossPublicly
     }
 }

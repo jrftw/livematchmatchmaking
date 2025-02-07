@@ -1,9 +1,15 @@
 // MARK: - AppSettingsView.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// -------------------------------------------------------
 
 import SwiftUI
 import CoreLocation
 import FirebaseAuth
+
+#if canImport(UIKit)
+import SafariServices
+import WebKit
+#endif
 
 @available(iOS 15.6, macOS 11.5, visionOS 2.0, *)
 public struct AppSettingsView: View {
@@ -11,6 +17,16 @@ public struct AppSettingsView: View {
     @AppStorage("defaultTimezone") private var defaultTimezone: String = ""
     
     @State private var showChangelog = false
+    @State private var showInAppBrowser = false
+    
+    // MARK: - Preloaded WebViews
+    #if canImport(UIKit)
+    @State private var bugReportWebView = WKWebView()
+    @State private var featureRequestWebView = WKWebView()
+    @State private var discordFallbackWebView = WKWebView()
+    @State private var currentWebView: WKWebView? = nil
+    #endif
+    
     @StateObject private var locationManager = LocationRegionDetector()
     @StateObject private var notificationManager = NotificationManager()
     
@@ -40,6 +56,13 @@ public struct AppSettingsView: View {
             .sheet(isPresented: $showChangelog) {
                 ChangelogView()
             }
+            #if canImport(UIKit)
+            .sheet(isPresented: $showInAppBrowser) {
+                if let wv = currentWebView {
+                    InAppBrowserView(webView: wv)
+                }
+            }
+            #endif
             .onChange(of: appColorScheme) { newValue in
                 applyColorScheme(newValue)
             }
@@ -48,13 +71,20 @@ public struct AppSettingsView: View {
                     detectInitialTimeZone()
                 }
                 applyColorScheme(appColorScheme)
+                
+                // Preload links
+                #if canImport(UIKit)
+                bugReportWebView.load(URLRequest(url: URL(string: "https://forms.gle/w7CFZUtyEXS8yqeg8")!))
+                featureRequestWebView.load(URLRequest(url: URL(string: "https://forms.gle/ekGuuymLZPBee13E9")!))
+                discordFallbackWebView.load(URLRequest(url: URL(string: "https://discord.gg/gJK9PH4eDR")!))
+                #endif
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
     }
     
     // MARK: - Sections
-    
+    // -------------------------------------------------------
     private func addOnSection() -> some View {
         Section("Add On") {
             NavigationLink("Manage Add-Ons") {
@@ -127,6 +157,19 @@ public struct AppSettingsView: View {
             Button("Join the Discord") {
                 openDiscord()
             }
+            #if canImport(UIKit)
+            Button("Bug Report") {
+                currentWebView = bugReportWebView
+                showInAppBrowser = true
+            }
+            Button("Feature Request") {
+                currentWebView = featureRequestWebView
+                showInAppBrowser = true
+            }
+            #else
+            Button("Bug Report") { }
+            Button("Feature Request") { }
+            #endif
         }
     }
     
@@ -139,9 +182,9 @@ public struct AppSettingsView: View {
     }
     
     // MARK: - Helpers
-    
+    // -------------------------------------------------------
     private func applyColorScheme(_ scheme: String) {
-        #if !os(macOS)
+        #if os(iOS)
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
             return
         }
@@ -166,7 +209,7 @@ public struct AppSettingsView: View {
     }
     
     private func openMail() {
-        #if !os(macOS)
+        #if os(iOS)
         if let url = URL(string: "mailto:jrftw@infinitumlive.com") {
             UIApplication.shared.open(url)
         }
@@ -174,10 +217,58 @@ public struct AppSettingsView: View {
     }
     
     private func openDiscord() {
-        #if !os(macOS)
-        if let url = URL(string: "https://discord.gg/gJK9PH4eDR") {
-            UIApplication.shared.open(url)
+        #if os(iOS)
+        let discordDeeplink = URL(string: "discord://invite/gJK9PH4eDR")!
+        if UIApplication.shared.canOpenURL(discordDeeplink) {
+            UIApplication.shared.open(discordDeeplink)
+        } else {
+            // Fallback to in-app web view
+            currentWebView = discordFallbackWebView
+            showInAppBrowser = true
         }
         #endif
     }
 }
+
+// MARK: - InAppBrowserView
+// -------------------------------------------------------
+#if canImport(UIKit)
+@available(iOS 15.0, *)
+struct InAppBrowserView: View {
+    let webView: WKWebView
+    
+    var body: some View {
+        NavigationView {
+            SwiftUIWKWebView(webView: webView)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Close") {
+                            dismissSheet()
+                        }
+                    }
+                }
+        }
+    }
+    
+    @Environment(\.presentationMode) private var presentationMode
+    
+    private func dismissSheet() {
+        presentationMode.wrappedValue.dismiss()
+    }
+}
+
+// MARK: - SwiftUIWKWebView
+@available(iOS 15.0, *)
+struct SwiftUIWKWebView: UIViewRepresentable {
+    let webView: WKWebView
+    
+    func makeUIView(context: Context) -> WKWebView {
+        return webView
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        // No updates required
+    }
+}
+#endif

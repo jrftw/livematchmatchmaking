@@ -1,5 +1,7 @@
 // FILE: FillInBracketDoc.swift
-// UPDATED FILE
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// -------------------------------------------------------
+// Represents the main bracket document in Firestore.
 
 import SwiftUI
 import FirebaseFirestore
@@ -13,7 +15,7 @@ public struct FillInBracketDoc: Identifiable, Codable {
     public var createdByUserID: String?
     public var createdAt: Date
     
-    // NEW: Whether this bracket is visible to everyone (public) or restricted
+    // Whether this bracket is visible to everyone or restricted
     public var isPublic: Bool
     
     public init(

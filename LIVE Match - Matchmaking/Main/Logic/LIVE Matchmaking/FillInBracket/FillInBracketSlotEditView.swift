@@ -1,13 +1,8 @@
-//
-//  FillInBracketSlotEditView.swift
-//  LIVE Match - Matchmaking
-//
-//  Created by Kevin Doyle Jr. on 1/31/25.
-//
-// MARK: FillInBracketSlotEditView.swift
+// FILE: FillInBracketSlotEditView.swift
 // iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// A subview for editing one bracket slot, loading "knownCreators" from user profiles
-// and "knownAgencies" from the app's agencies/networks in Firestore.
+// -------------------------------------------------------
+// A subview for editing one bracket slot's details. The user can pick from known creators/agencies
+// or type manually. Times are displayed in multiple timezones for convenience.
 
 import SwiftUI
 import Foundation
@@ -66,6 +61,8 @@ public struct FillInBracketSlotEditView: View {
                     
                     TextField("Category", text: $slot.category1)
                     TextField("Diamond Avg", text: $slot.diamondAvg1)
+                    
+                    Toggle("Creator #1 Confirmed?", isOn: $slot.creator1Confirmed)
                 }
                 
                 Section(header: Text("Creator #2")) {
@@ -87,6 +84,8 @@ public struct FillInBracketSlotEditView: View {
                     
                     TextField("Category", text: $slot.category2)
                     TextField("Diamond Avg", text: $slot.diamondAvg2)
+                    
+                    Toggle("Creator #2 Confirmed?", isOn: $slot.creator2Confirmed)
                 }
                 
                 Section(header: Text("Status / Notes")) {
@@ -133,7 +132,6 @@ public struct FillInBracketSlotEditView: View {
             guard let docs = snapshot?.documents else { return }
             var fetched: [String] = []
             for doc in docs {
-                // Replace with your actual user model fields
                 let username = doc.data()["username"] as? String ?? ""
                 if !username.isEmpty {
                     fetched.append(username)
@@ -156,7 +154,6 @@ public struct FillInBracketSlotEditView: View {
             guard let docs = snapshot?.documents else { return }
             var fetched: [String] = []
             for doc in docs {
-                // Replace with your actual agency model fields
                 let agencyName = doc.data()["name"] as? String ?? ""
                 if !agencyName.isEmpty {
                     fetched.append(agencyName)

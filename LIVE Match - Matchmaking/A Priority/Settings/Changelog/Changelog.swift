@@ -111,7 +111,7 @@ public struct Changelog {
             build: "1",
             releaseDate: "2/6/25",
             changes: [
-                "Initial release for 1.01."
+                "Initial release for 1.01. Released and advertising to the public."
             ]
         )
     ]

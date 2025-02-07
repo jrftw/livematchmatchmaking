@@ -1,10 +1,5 @@
 // MARK: EditProfileView.swift
 // iOS 15.6+, macOS 11.5, visionOS 2.0+
-//
-// A single-file approach that places all code in one file.
-// Combine the main struct and the extension logic to avoid
-// "Cannot find in scope" errors. Remove other EditProfileView
-// definitions so this is the sole version.
 
 import SwiftUI
 import FirebaseAuth
@@ -184,7 +179,7 @@ public struct EditProfileView: View {
                     Toggle("Show Phone Publicly", isOn: $profile.phonePublicly)
                 }
                 
-                // MARK: Availability
+                // MARK: Availability & TimeZone
                 Section("Availability & TimeZone") {
                     NavigationLink("Configure Availability") {
                         CreatorAvailabilityView()
@@ -218,7 +213,7 @@ public struct EditProfileView: View {
                     ))
                 }
                 
-                // MARK: Social Links
+                // MARK: Social Network Links
                 Section("Social Network Links") {
                     ForEach(Array(profile.socialLinks.keys), id: \.self) { key in
                         HStack {
@@ -235,6 +230,8 @@ public struct EditProfileView: View {
                 Section("Wins / Losses") {
                     Stepper("Wins: \(profile.wins)", value: bindingForInt(\.wins))
                     Stepper("Losses: \(profile.losses)", value: bindingForInt(\.losses))
+                    
+                    Toggle("Show Win / Lose Stats Publicly", isOn: $profile.showWinLossPublicly)
                 }
                 
                 // MARK: LM Studio
@@ -265,6 +262,7 @@ public struct EditProfileView: View {
             .navigationBarItems(leading: Button("Cancel") {
                 dismiss()
             })
+            // Image pickers
             .sheet(isPresented: $showingProfilePicker) {
                 #if os(iOS) || os(visionOS)
                 ImagePicker(image: $newProfileImage)
@@ -275,6 +273,7 @@ public struct EditProfileView: View {
                 ImagePicker(image: $newBannerImage)
                 #endif
             }
+            // Password
             .sheet(isPresented: $showingPasswordChange) {
                 passwordChangeSheet()
             }

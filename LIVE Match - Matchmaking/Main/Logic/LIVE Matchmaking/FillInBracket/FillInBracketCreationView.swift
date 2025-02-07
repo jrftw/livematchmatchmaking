@@ -1,5 +1,7 @@
 // FILE: FillInBracketCreationView.swift
-// UPDATED FILE
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// -------------------------------------------------------
+// Allows users to create or edit a bracket, controlling its name, slots, and visibility.
 
 import SwiftUI
 import UniformTypeIdentifiers
@@ -263,7 +265,7 @@ public struct FillInBracketCreationView: View {
     // MARK: CSV Utilities
     private func buildCSV(from slots: [FillInBracketSlot]) -> String {
         var lines: [String] = []
-        lines.append("Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Creator2,Net/Agency2,Cat2,Diamond2,Status,Notes,Link")
+        lines.append("Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Confirmed1,Creator2,Net/Agency2,Cat2,Diamond2,Confirmed2,Status,Notes,Link")
         for slot in slots {
             let pt = formatTimeZone(slot.startDateTime, "America/Los_Angeles")
             let mt = formatTimeZone(slot.startDateTime, "America/Denver")
@@ -280,10 +282,12 @@ public struct FillInBracketCreationView: View {
                 cleanForCSV(slot.creatorNetworkOrAgency1),
                 cleanForCSV(slot.category1),
                 cleanForCSV(slot.diamondAvg1),
+                "\(slot.creator1Confirmed)",
                 cleanForCSV(slot.creator2),
                 cleanForCSV(slot.creatorNetworkOrAgency2),
                 cleanForCSV(slot.category2),
                 cleanForCSV(slot.diamondAvg2),
+                "\(slot.creator2Confirmed)",
                 slot.status.rawValue,
                 cleanForCSV(slot.notes),
                 cleanForCSV(slot.link)
@@ -332,31 +336,42 @@ public struct FillInBracketCreationView: View {
         var newSlots: [FillInBracketSlot] = []
         for row in lines.dropFirst() {
             let cols = row.split(separator: ",").map { String($0) }
-            if cols.count < 16 { continue }
-            let localDateStr = cols[0]
-            let statusStr = cols[13]
-            let notes = cols[14]
-            let link = cols[15]
-            let c1 = cols[5]
-            let net1 = cols[6]
-            let cat1 = cols[7]
-            let d1 = cols[8]
-            let c2 = cols[9]
-            let net2 = cols[10]
-            let cat2 = cols[11]
-            let d2 = cols[12]
-            let statusParsed = MatchStatus(rawValue: statusStr) ?? .pending
+            if cols.count < 18 { continue } // We expect 18 columns
+            let localDateStr   = cols[0]
+            let statusStr      = cols[15]
+            let notes          = cols[16]
+            let link           = cols[17]
+            
+            let c1            = cols[5]
+            let net1          = cols[6]
+            let cat1          = cols[7]
+            let d1            = cols[8]
+            let confirmed1Str = cols[9]
+            
+            let c2            = cols[10]
+            let net2          = cols[11]
+            let cat2          = cols[12]
+            let d2            = cols[13]
+            let confirmed2Str = cols[14]
+            
+            let statusParsed  = MatchStatus(rawValue: statusStr) ?? .pending
+            let confirm1      = (confirmed1Str == "true")
+            let confirm2      = (confirmed2Str == "true")
+            
             let df = DateFormatter()
             df.dateStyle = .short
             df.timeStyle = .none
             let date = df.date(from: localDateStr) ?? Date()
+            
             let slot = FillInBracketSlot(
                 startDateTime: date,
                 creator1: c1,
+                creator1Confirmed: confirm1,
                 creatorNetworkOrAgency1: net1,
                 category1: cat1,
                 diamondAvg1: d1,
                 creator2: c2,
+                creator2Confirmed: confirm2,
                 creatorNetworkOrAgency2: net2,
                 category2: cat2,
                 diamondAvg2: d2,
@@ -381,8 +396,8 @@ public struct FillInBracketCreationView: View {
     // MARK: Template Downloads
     private func downloadCSVTemplate() {
         let lines = [
-            "Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Creator2,Net/Agency2,Cat2,Diamond2,Status,Notes,Link",
-            "1/1/25,8:00 PM,9:00 PM,10:00 PM,11:00 PM,CreatorA,AgencyX,Music,1000,CreatorB,NetworkZ,Comedy,2000,Pending,Sample notes,https://example.com"
+            "Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Confirmed1,Creator2,Net/Agency2,Cat2,Diamond2,Confirmed2,Status,Notes,Link",
+            "1/1/25,8:00 PM,9:00 PM,10:00 PM,11:00 PM,CreatorA,AgencyX,Music,1000,false,CreatorB,NetworkZ,Comedy,2000,false,Pending,Sample notes,https://example.com"
         ]
         let csvText = lines.joined(separator: "\n")
         let filename = "FillInBracket_Template.csv"
@@ -398,8 +413,8 @@ public struct FillInBracketCreationView: View {
     
     private func downloadExcelTemplate() {
         let lines = [
-            "Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Creator2,Net/Agency2,Cat2,Diamond2,Status,Notes,Link",
-            "1/1/25,8:00 PM,9:00 PM,10:00 PM,11:00 PM,CreatorA,AgencyX,Music,1000,CreatorB,NetworkZ,Comedy,2000,Pending,Sample notes,https://example.com"
+            "Date,PT,MT,CT,ET,Creator1,Net/Agency1,Cat1,Diamond1,Confirmed1,Creator2,Net/Agency2,Cat2,Diamond2,Confirmed2,Status,Notes,Link",
+            "1/1/25,8:00 PM,9:00 PM,10:00 PM,11:00 PM,CreatorA,AgencyX,Music,1000,false,CreatorB,NetworkZ,Comedy,2000,false,Pending,Sample notes,https://example.com"
         ]
         let pseudoExcel = lines.joined(separator: "\n")
         let filename = "FillInBracket_Template.xlsx"

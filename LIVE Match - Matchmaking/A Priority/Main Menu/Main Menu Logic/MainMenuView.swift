@@ -11,7 +11,7 @@ public struct MainMenuView: View {
     @Binding var selectedScreen: MainScreen
     
     private let showLiveMatchmaking      = true
-    private let showGameMatchmaking      = false
+    private let showGameMatchmaking      = true
     private let showTournaments          = false
     private let showNews                 = true
     private let showMyEvents             = true

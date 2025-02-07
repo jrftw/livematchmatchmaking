@@ -1,11 +1,8 @@
-// MARK: FillInBracketListView.swift
-
-//
-//  FillInBracketListView.swift
-//  LIVE Match - Matchmaking
-//
-//  iOS 15.6+, macOS 11.5+, visionOS 2.0+
-//
+// FILE: FillInBracketListView.swift
+// iOS 15.6+, macOS 11.5+, visionOS 2.0+
+// -------------------------------------------------------
+// Shows a list of existing fill-in brackets for a specific platform.
+// Allows navigating to edit them or create a new bracket.
 
 import SwiftUI
 import FirebaseFirestore
