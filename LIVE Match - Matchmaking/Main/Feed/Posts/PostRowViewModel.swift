@@ -1,8 +1,6 @@
 // MARK: - PostRowViewModel.swift
-// iOS 15.6+, macOS 11.5+, visionOS 2.0+
-// Handles user profile pic, like status, follow status, etc.
-// This does NOT force the user to like, comment, or follow anyone;
-// it only watches for current statuses (liked/following) and displays them.
+// iOS 15.6+, macOS 11.5, visionOS 2.0+
+// Handles user profile pic, like status, follow status, comment count, etc.
 
 import SwiftUI
 import Firebase
@@ -13,6 +11,7 @@ public final class PostRowViewModel: ObservableObject {
     @Published public var profilePicURL: String?
     @Published public var isLiked = false
     @Published public var isFollowing = false
+    @Published public var commentCount = 0
     
     private let db = FirebaseManager.shared.db
     private var userId: String
@@ -24,6 +23,7 @@ public final class PostRowViewModel: ObservableObject {
         fetchProfilePic()
         watchLikeStatus()
         watchFollowStatus()
+        watchCommentCount()
     }
     
     private func fetchProfilePic() {
@@ -42,11 +42,7 @@ public final class PostRowViewModel: ObservableObject {
             .collection("likes")
             .document(uid)
             .addSnapshotListener { snap, _ in
-                if let s = snap, s.exists {
-                    self.isLiked = true
-                } else {
-                    self.isLiked = false
-                }
+                self.isLiked = (snap?.exists == true)
             }
     }
     
@@ -58,11 +54,17 @@ public final class PostRowViewModel: ObservableObject {
             .collection("following")
             .document(userId)
             .addSnapshotListener { snap, _ in
-                if let s = snap, s.exists {
-                    self.isFollowing = true
-                } else {
-                    self.isFollowing = false
-                }
+                self.isFollowing = (snap?.exists == true)
+            }
+    }
+    
+    private func watchCommentCount() {
+        guard let postId = postId else { return }
+        db.collection("posts")
+            .document(postId)
+            .collection("comments")
+            .addSnapshotListener { snapshot, _ in
+                self.commentCount = snapshot?.documents.count ?? 0
             }
     }
 }

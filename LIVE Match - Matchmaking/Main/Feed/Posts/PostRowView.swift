@@ -13,6 +13,8 @@ public struct PostRowView: View {
     @State private var showCommentSheet = false
     @State private var commentText = ""
     
+    @State private var showCommentListView = false
+    
     public init(post: Post) {
         self.post = post
         _rowVM = StateObject(wrappedValue: PostRowViewModel(userId: post.userId, postId: post.id))
@@ -20,6 +22,7 @@ public struct PostRowView: View {
     
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // MARK: - User Info Row
             HStack(alignment: .top, spacing: 12) {
                 if let picURL = rowVM.profilePicURL,
                    !picURL.isEmpty,
@@ -63,12 +66,14 @@ public struct PostRowView: View {
                 }
             }
             
+            // MARK: - Text Content
             if !post.text.isEmpty {
                 Text(post.text)
                     .font(.body)
                     .padding(.top, 4)
             }
             
+            // MARK: - Image Content
             if let imageURL = post.imageURL, !imageURL.isEmpty {
                 AsyncImage(url: URL(string: imageURL)) { phase in
                     switch phase {
@@ -90,6 +95,7 @@ public struct PostRowView: View {
                 }
             }
             
+            // MARK: - Video Content
             if let videoURL = post.videoURL, !videoURL.isEmpty {
                 if let url = URL(string: videoURL) {
                     VideoPlayer(player: AVPlayer(url: url))
@@ -99,6 +105,7 @@ public struct PostRowView: View {
                 }
             }
             
+            // MARK: - Action Buttons
             HStack(spacing: 30) {
                 Button(rowVM.isLiked ? "Unlike" : "Like") {
                     guard let postId = post.id else { return }
@@ -110,10 +117,18 @@ public struct PostRowView: View {
                 }
                 .buttonStyle(.plain)
                 
-                Button("Comment") {
-                    showCommentSheet = true
+                // MARK: - Comments Button and Count
+                HStack(spacing: 8) {
+                    Button("Comment") {
+                        showCommentSheet = true
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button("\(rowVM.commentCount)") {
+                        showCommentListView = true
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 
                 Button(rowVM.isFollowing ? "Unfollow" : "Follow") {
                     if rowVM.isFollowing {
@@ -143,31 +158,51 @@ public struct PostRowView: View {
             .font(.subheadline)
             .padding(.top, 6)
             
+            // MARK: - Timestamp
             Text(post.timestamp, style: .time)
                 .font(.caption2)
                 .foregroundColor(.gray)
         }
         .padding(.vertical, 8)
+        
+        // MARK: - Add Comment Sheet
         .sheet(isPresented: $showCommentSheet) {
-            VStack(spacing: 16) {
-                Text("Add a Comment").font(.headline)
-                TextField("Type your comment here...", text: $commentText)
-                    .textFieldStyle(.roundedBorder)
-                HStack {
+            ZStack {
+                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                VStack(spacing: 20) {
+                    Text("Add a Comment")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    TextField("Type your comment here...", text: $commentText)
+                        .textFieldStyle(.roundedBorder)
+                        .padding(.horizontal)
+                    
+                    HStack(spacing: 20) {
+                        Button("Cancel") {
+                            showCommentSheet = false
+                        }
+                        .foregroundColor(.red)
+                        
+                        Button("Submit") {
+                            guard let postId = post.id else { return }
+                            CommentService.shared.addComment(postId: postId, commentText: commentText) { _ in }
+                            showCommentSheet = false
+                            commentText = ""
+                        }
+                        .foregroundColor(.blue)
+                    }
                     Spacer()
-                    Button("Submit") {
-                        guard let postId = post.id else { return }
-                        CommentService.shared.addComment(postId: postId, commentText: commentText) { _ in }
-                        showCommentSheet = false
-                        commentText = ""
-                    }
-                    Button("Cancel") {
-                        showCommentSheet = false
-                    }
                 }
-                .padding(.top, 8)
+                .padding(.top, 40)
             }
-            .padding()
+        }
+        
+        // MARK: - Comment List View Sheet
+        .sheet(isPresented: $showCommentListView) {
+            if let postId = post.id {
+                CommentListView(postId: postId)
+            }
         }
     }
 }
