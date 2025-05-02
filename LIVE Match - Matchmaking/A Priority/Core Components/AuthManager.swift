@@ -14,7 +14,7 @@ public final class AuthManager: ObservableObject {
     public static let shared = AuthManager()
     
     // MARK: - Published Properties
-    @Published public var user: User? = Auth.auth().currentUser
+    @Published public var user: FirebaseAuth.User? = Auth.auth().currentUser
     @Published public var isGuest: Bool = false
     
     // MARK: - Private
